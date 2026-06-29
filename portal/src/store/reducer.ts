@@ -36,6 +36,8 @@ export const initialState: PortalState = {
 
   plannerSelectedApiIds: [],
 
+  catalogFilters: { query: '', domainFilter: '', classFilter: '' },
+
 };
 
 
@@ -265,6 +267,10 @@ export function portalReducer(state: PortalState, action: PortalAction): PortalS
     case 'SET_PLANNER_SELECTION':
 
       return { ...state, plannerSelectedApiIds: action.payload };
+
+    case 'SET_CATALOG_FILTERS':
+
+      return { ...state, catalogFilters: action.payload };
 
     default:
 

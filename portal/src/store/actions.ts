@@ -6,6 +6,8 @@ import type {
 
   AuditLog,
 
+  CatalogFilters,
+
   Credential,
 
   LLMSubscriptionRequest,
@@ -96,6 +98,8 @@ export type PortalAction =
 
   | { type: 'SET_PLANNER'; payload: { description: string; selected?: string[] } }
 
-  | { type: 'SET_PLANNER_SELECTION'; payload: string[] };
+  | { type: 'SET_PLANNER_SELECTION'; payload: string[] }
+
+  | { type: 'SET_CATALOG_FILTERS'; payload: CatalogFilters };
 
 

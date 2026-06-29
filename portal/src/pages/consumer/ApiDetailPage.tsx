@@ -430,47 +430,55 @@ export function ApiDetailPage() {
 
       {showSubModal && (
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
 
-          <div className="w-full max-w-2xl rounded-xl bg-brand-white p-6 space-y-4 my-8">
+          <div className="w-full max-w-2xl max-h-[min(90vh,48rem)] flex flex-col rounded-xl bg-brand-white shadow-xl">
 
-            <h2 className="text-lg font-bold">{isLlm ? 'Request LLM API Access' : 'Request Subscription'}</h2>
+            <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-slate-100 space-y-4">
 
-            <div>
-
-              <label className="block text-sm font-medium mb-1">Application</label>
-
-              <select value={appId} onChange={(e) => setAppId(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm">
-
-                {myApps.map((a) => <option key={a.application_id} value={a.application_id}>{a.name}</option>)}
-
-              </select>
-
-            </div>
-
-            {isLlm ? (
-
-              <LLMSubscriptionForm value={llmForm} onChange={setLlmForm} />
-
-            ) : (
+              <h2 className="text-lg font-bold">{isLlm ? 'Request LLM API Access' : 'Request Subscription'}</h2>
 
               <div>
 
-                <div className="flex justify-between mb-1">
+                <label className="block text-sm font-medium mb-1">Application</label>
 
-                  <label className="text-sm font-medium">Purpose (required)</label>
+                <select value={appId} onChange={(e) => setAppId(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm">
 
-                  <button type="button" onClick={draftPurpose} disabled={aiPurposeLoading} className="text-xs text-brand-blue">AI-3 Help me write this</button>
+                  {myApps.map((a) => <option key={a.application_id} value={a.application_id}>{a.name}</option>)}
 
-                </div>
-
-                <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={4} className="w-full rounded-lg border px-3 py-2 text-sm" />
+                </select>
 
               </div>
 
-            )}
+            </div>
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+
+              {isLlm ? (
+
+                <LLMSubscriptionForm value={llmForm} onChange={setLlmForm} />
+
+              ) : (
+
+                <div>
+
+                  <div className="flex justify-between mb-1">
+
+                    <label className="text-sm font-medium">Purpose (required)</label>
+
+                    <button type="button" onClick={draftPurpose} disabled={aiPurposeLoading} className="text-xs text-brand-blue">AI-3 Help me write this</button>
+
+                  </div>
+
+                  <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={4} className="w-full rounded-lg border px-3 py-2 text-sm" />
+
+                </div>
+
+              )}
+
+            </div>
+
+            <div className="flex-shrink-0 px-6 py-4 border-t border-slate-100 flex gap-2 justify-end">
 
               <button type="button" onClick={() => setShowSubModal(false)} className="px-4 py-2 text-sm">Cancel</button>
 

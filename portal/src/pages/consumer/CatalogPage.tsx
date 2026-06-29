@@ -8,23 +8,24 @@ import { AIBadge } from '@/components/ai/AIBadge';
 import { getAIResponse } from '@/mocks/AIAdapter';
 import { domains } from '@/data/domains';
 import { CLASSIFICATIONS } from '@/config/classification';
-import type { Classification } from '@/types';
+import type { CatalogFilters, Classification } from '@/types';
 
 export function CatalogPage() {
-  const { state } = usePortal();
+  const { state, dispatch } = usePortal();
   const visible = useVisibleApis(state.apis);
-  const [query, setQuery] = useState('');
-  const [domainFilter, setDomainFilter] = useState('');
-  const [classFilter, setClassFilter] = useState('');
-  const [aiContext, setAiContext] = useState<string>();
+  const { query, domainFilter, classFilter, aiContext } = state.catalogFilters;
   const [aiLoading, setAiLoading] = useState(false);
+
+  const setFilters = (patch: Partial<CatalogFilters>) => {
+    dispatch({ type: 'SET_CATALOG_FILTERS', payload: { ...state.catalogFilters, ...patch } });
+  };
 
   const search = async () => {
     if (!query.trim()) return;
     setAiLoading(true);
     await getAIResponse('AI_15_NaturalLanguageSearch', { query });
     const res = await getAIResponse('AI_2_SemanticSearch', { query });
-    setAiContext(res?.text);
+    setFilters({ aiContext: res?.text });
     setAiLoading(false);
   };
 
@@ -49,7 +50,7 @@ export function CatalogPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => setFilters({ query: e.target.value })}
             onKeyDown={(e) => e.key === 'Enter' && search()}
             placeholder='Try: "APIs for employee salary statistics" or keyword search'
             className="w-full rounded-lg border border-slate-200 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-brand-blue"
@@ -63,11 +64,11 @@ export function CatalogPage() {
       <AIThinkingOverlay loading={aiLoading} text={!aiLoading ? aiContext : undefined} />
 
       <div className="flex flex-wrap gap-3">
-        <select value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select value={domainFilter} onChange={(e) => setFilters({ domainFilter: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
           <option value="">All domains</option>
           {domains.map((d) => <option key={d.domain_id} value={d.domain_id}>{d.name}</option>)}
         </select>
-        <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select value={classFilter} onChange={(e) => setFilters({ classFilter: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
           <option value="">All classifications</option>
           {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
             <option key={c} value={c}>{CLASSIFICATIONS[c].label}</option>

@@ -400,6 +400,20 @@ export interface AIResponse {
 
 
 
+export interface CatalogFilters {
+
+  query: string;
+
+  domainFilter: string;
+
+  classFilter: string;
+
+  aiContext?: string;
+
+}
+
+
+
 export interface PortalState {
 
   currentUser: User | null;
@@ -427,6 +441,8 @@ export interface PortalState {
   plannerDescription: string;
 
   plannerSelectedApiIds: string[];
+
+  catalogFilters: CatalogFilters;
 
 }
 
