@@ -40,6 +40,12 @@ export function isLlmApi(api: { domain_id: string }) {
 
 
 
+export const LLM_API_COST_PER_HOUR_USD = 75;
+
+export const WEEKS_PER_YEAR = 52;
+
+
+
 export function calculateLlmRoi(fields: {
 
   frequency_before: number;
@@ -79,6 +85,46 @@ export function calculateLlmRoi(fields: {
     totalWeeklyHours: Math.round((totalWeekly / 60) * 10) / 10,
 
   };
+
+}
+
+
+
+export function calculateLlmAnnualSpending(fields: {
+
+  frequency_after: number;
+
+  time_after_minutes: number;
+
+  expected_users: number;
+
+}) {
+
+  const weeklyHoursPerUser = (fields.frequency_after * fields.time_after_minutes) / 60;
+
+  const totalWeeklyHours = weeklyHoursPerUser * Math.max(1, fields.expected_users);
+
+  const annualHours = totalWeeklyHours * WEEKS_PER_YEAR;
+
+  const annualSpendingUsd = annualHours * LLM_API_COST_PER_HOUR_USD;
+
+  return {
+
+    weeklyHours: Math.round(totalWeeklyHours * 10) / 10,
+
+    annualHours: Math.round(annualHours * 10) / 10,
+
+    annualSpendingUsd: Math.round(annualSpendingUsd),
+
+  };
+
+}
+
+
+
+export function formatLlmAnnualSpending(amountUsd: number): string {
+
+  return `$${amountUsd.toLocaleString('en-US')}/year`;
 
 }
 

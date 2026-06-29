@@ -12,6 +12,8 @@ import { useNotify } from '@/hooks/useNotify';
 
 import { provisionSubscription } from '@/mocks/GatewayAdapter';
 
+import { calculateLlmAnnualSpending, formatLlmAnnualSpending } from '@/lib/roles';
+
 import type { Subscription } from '@/types';
 
 
@@ -190,7 +192,9 @@ export function LLMSubscriptionQueuePage() {
 
                       <p className="text-sm text-slate-500">
 
-                        {user?.display_name} · {api?.name} · {req.estimated_value}
+                        {user?.display_name} · {api?.name} ·{' '}
+
+                        {formatLlmAnnualSpending(calculateLlmAnnualSpending(req).annualSpendingUsd)}
 
                       </p>
 
@@ -292,7 +296,7 @@ export function LLMSubscriptionQueuePage() {
 
                 <th className="px-4 py-2">Status</th>
 
-                <th className="px-4 py-2">Value</th>
+                <th className="px-4 py-2">Est. API spend</th>
 
               </tr>
 
@@ -310,7 +314,11 @@ export function LLMSubscriptionQueuePage() {
 
                   <td className="px-4 py-3 capitalize">{r.status}</td>
 
-                  <td className="px-4 py-3">{r.estimated_value}</td>
+                  <td className="px-4 py-3">
+
+                    {formatLlmAnnualSpending(calculateLlmAnnualSpending(r).annualSpendingUsd)}
+
+                  </td>
 
                 </tr>
 
