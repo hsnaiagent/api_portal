@@ -48,7 +48,7 @@ export const initialWorkflows: WorkflowInstance[] = [
 
     approvers: [
 
-      { user_id: 'user_developer', role: 'data_owner', decision: 'approved', decided_at: '2026-06-23T09:00:00Z', comment: 'Approved for forecasting use' },
+      { user_id: 'user_murad', role: 'data_owner', decision: 'approved', decided_at: '2026-06-23T09:00:00Z', comment: 'Approved for HR forecasting integration' },
 
     ],
 
@@ -76,7 +76,7 @@ export const initialWorkflows: WorkflowInstance[] = [
 
     approvers: [
 
-      { user_id: 'user_developer', role: 'team_lead', decision: 'rejected', decided_at: '2026-06-16T10:00:00Z', comment: 'Purpose not aligned with team policy' },
+      { user_id: 'user_murad', role: 'team_lead', decision: 'rejected', decided_at: '2026-06-16T10:00:00Z', comment: 'Purpose not aligned with CRM data use policy' },
 
     ],
 
@@ -86,6 +86,30 @@ export const initialWorkflows: WorkflowInstance[] = [
 
   },
 
+  {
+
+    workflow_instance_id: 'wf_004',
+
+    external_workflow_id: 'ext_wf_004',
+
+    correlation_id: 'sub_009',
+
+    workflow_template_id: 'api-access-confidential',
+
+    subscription_id: 'sub_009',
+
+    api_id: 'api_hr_benefits',
+
+    status: 'in_progress',
+
+    approvers: [
+
+      { user_id: 'user_developer', role: 'data_owner', decision: 'pending' },
+
+    ],
+
+    triggered_at: '2026-06-24T09:05:00Z',
+
+  },
+
 ];
-
-

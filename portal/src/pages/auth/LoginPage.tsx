@@ -18,24 +18,6 @@ const personas = [
 
   {
 
-    userId: 'user_developer',
-
-    role: 'developer' as PortalRole,
-
-    title: 'Developer',
-
-    description: 'Discover and consume APIs. Request publisher access for your domain.',
-
-    icon: Code2,
-
-    accent: 'border-brand-green hover:bg-brand-green-light/30',
-
-    iconBg: 'bg-brand-green-light text-brand-green',
-
-  },
-
-  {
-
     userId: 'user_llm_admin',
 
     role: 'llm_admin' as PortalRole,
@@ -67,6 +49,48 @@ const personas = [
     accent: 'border-slate-400 hover:bg-slate-50',
 
     iconBg: 'bg-slate-100 text-slate-700',
+
+  },
+
+];
+
+
+
+const developers = [
+
+  {
+
+    userId: 'user_developer',
+
+    title: 'Ahmad Al-Rashidi',
+
+    description: 'HR API publisher · owns HR & Procurement APIs',
+
+    accent: 'border-brand-green hover:bg-brand-green-light/30',
+
+  },
+
+  {
+
+    userId: 'user_murad',
+
+    title: 'Murad',
+
+    description: 'Finance & Sales publisher · owns Finance, Sales & Operations APIs',
+
+    accent: 'border-brand-blue hover:bg-brand-blue-light/30',
+
+  },
+
+  {
+
+    userId: 'user_ali',
+
+    title: 'Ali',
+
+    description: 'Consumer only · no publisher access',
+
+    accent: 'border-slate-300 hover:bg-slate-50',
 
   },
 
@@ -158,13 +182,57 @@ export function LoginPage() {
 
           </button>
 
-          <p className="text-center text-xs text-slate-500">Enterprise SSO — signs in as Developer by default</p>
+          <p className="text-center text-xs text-slate-500">Enterprise SSO — signs in as Ahmad (HR publisher) by default</p>
 
 
 
           <div className="border-t border-slate-200 pt-6 space-y-3">
 
-            <p className="text-sm font-medium text-slate-700">Demo personas</p>
+            <p className="text-sm font-medium text-slate-700">Developers</p>
+
+            {developers.map(({ userId, title, description, accent }) => (
+
+              <button
+
+                key={userId}
+
+                type="button"
+
+                onClick={() => loginAs(userId, 'developer')}
+
+                className={`w-full text-left rounded-xl border-2 bg-brand-white p-4 transition-colors ${accent}`}
+
+              >
+
+                <div className="flex items-start gap-3">
+
+                  <div className="rounded-lg p-2 bg-brand-green-light text-brand-green">
+
+                    <Code2 className="h-5 w-5" />
+
+                  </div>
+
+                  <div className="flex-1">
+
+                    <p className="font-semibold text-slate-800">{title}</p>
+
+                    <p className="text-sm text-slate-500 mt-1">{description}</p>
+
+                  </div>
+
+                </div>
+
+              </button>
+
+            ))}
+
+          </div>
+
+
+
+          <div className="border-t border-slate-200 pt-6 space-y-3">
+
+            <p className="text-sm font-medium text-slate-700">Platform admins</p>
 
             {personas.map(({ userId, role, title, description, icon: Icon, accent, iconBg }) => {
 

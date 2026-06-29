@@ -56,28 +56,28 @@ export const initialApis: API[] = [
   api('api_hr_pii', 'dom_hr', 'Employee PII Vault API', 'pii-vault', 'Restricted personal identity data access.', 'restricted', 'published', 'user_developer', ['hr', 'pii'], 3, 'user_developer'),
   api('api_hr_leave', 'dom_hr', 'Leave Management API', 'leave', 'Leave balances and requests.', 'internal', 'in_testing', 'user_developer', ['hr', 'leave']),
   api('api_hr_recruit', 'dom_hr', 'Recruitment Pipeline API', 'recruitment', 'Open positions and candidate pipeline.', 'internal', 'proposed', 'user_developer', ['hr', 'recruitment']),
-  // Finance
-  api('api_fin_ledger', 'dom_finance', 'General Ledger API', 'ledger', 'Chart of accounts and ledger entries.', 'confidential', 'published', 'user_developer', ['finance', 'ledger'], 2, 'user_developer'),
-  api('api_fin_budget', 'dom_finance', 'Budget Forecast API', 'budget-forecast', 'Budget vs actual forecast data.', 'confidential', 'published', 'user_developer', ['finance', 'budget'], 2, 'user_developer'),
-  api('api_fin_invoice', 'dom_finance', 'Invoice Processing API', 'invoices', 'Vendor invoice status and payments.', 'internal', 'published', 'user_developer', ['finance', 'invoices']),
-  api('api_fin_rates', 'dom_finance', 'Exchange Rates API', 'exchange-rates', 'Daily FX rates for reporting.', 'public', 'published', 'user_developer', ['finance', 'fx']),
-  api('api_fin_audit', 'dom_finance', 'Financial Audit Trail API', 'audit-trail', 'Restricted audit log access.', 'restricted', 'published', 'user_developer', ['finance', 'audit'], 3, 'user_developer'),
-  api('api_fin_report', 'dom_finance', 'Quarterly Reports API', 'quarterly-reports', 'Quarterly financial report extracts.', 'confidential', 'under_review', 'user_developer', ['finance', 'reports'], 2, 'user_developer'),
-  // Operations
-  api('api_ops_assets', 'dom_ops', 'Asset Management API', 'assets', 'Plant asset registry and maintenance.', 'internal', 'published', 'user_developer', ['operations', 'assets']),
-  api('api_ops_production', 'dom_ops', 'Production Metrics API', 'production', 'Daily production output metrics.', 'internal', 'published', 'user_developer', ['operations', 'production']),
-  api('api_ops_safety', 'dom_ops', 'Safety Incidents API', 'safety', 'Safety incident reporting data.', 'confidential', 'published', 'user_developer', ['operations', 'safety'], 2, 'user_developer'),
-  api('api_ops_logistics', 'dom_ops', 'Logistics Tracking API', 'logistics', 'Shipment and logistics tracking.', 'internal', 'draft', 'user_developer', ['operations', 'logistics']),
+  // Finance — Murad (Finance & Sales publisher)
+  api('api_fin_ledger', 'dom_finance', 'General Ledger API', 'ledger', 'Chart of accounts and ledger entries.', 'confidential', 'published', 'user_murad', ['finance', 'ledger'], 2, 'user_murad'),
+  api('api_fin_budget', 'dom_finance', 'Budget Forecast API', 'budget-forecast', 'Budget vs actual forecast data.', 'confidential', 'published', 'user_murad', ['finance', 'budget'], 2, 'user_murad'),
+  api('api_fin_invoice', 'dom_finance', 'Invoice Processing API', 'invoices', 'Vendor invoice status and payments.', 'internal', 'published', 'user_murad', ['finance', 'invoices']),
+  api('api_fin_rates', 'dom_finance', 'Exchange Rates API', 'exchange-rates', 'Daily FX rates for reporting.', 'public', 'published', 'user_murad', ['finance', 'fx']),
+  api('api_fin_audit', 'dom_finance', 'Financial Audit Trail API', 'audit-trail', 'Restricted audit log access.', 'restricted', 'published', 'user_murad', ['finance', 'audit'], 3, 'user_murad'),
+  api('api_fin_report', 'dom_finance', 'Quarterly Reports API', 'quarterly-reports', 'Quarterly financial report extracts.', 'confidential', 'under_review', 'user_murad', ['finance', 'reports'], 2, 'user_murad'),
+  // Operations — Murad
+  api('api_ops_assets', 'dom_ops', 'Asset Management API', 'assets', 'Plant asset registry and maintenance.', 'internal', 'published', 'user_murad', ['operations', 'assets']),
+  api('api_ops_production', 'dom_ops', 'Production Metrics API', 'production', 'Daily production output metrics.', 'internal', 'published', 'user_murad', ['operations', 'production']),
+  api('api_ops_safety', 'dom_ops', 'Safety Incidents API', 'safety', 'Safety incident reporting data.', 'confidential', 'published', 'user_murad', ['operations', 'safety'], 2, 'user_murad'),
+  api('api_ops_logistics', 'dom_ops', 'Logistics Tracking API', 'logistics', 'Shipment and logistics tracking.', 'internal', 'draft', 'user_murad', ['operations', 'logistics']),
   // Procurement
   api('api_proc_vendors', 'dom_proc', 'Vendor Registry API', 'vendors', 'Approved vendor master data.', 'internal', 'published', 'user_developer', ['procurement', 'vendors']),
   api('api_proc_contracts', 'dom_proc', 'Contract Management API', 'contracts', 'Active procurement contracts.', 'confidential', 'published', 'user_developer', ['procurement', 'contracts'], 2, 'user_developer'),
   api('api_proc_po', 'dom_proc', 'Purchase Orders API', 'purchase-orders', 'PO creation and status.', 'internal', 'published', 'user_developer', ['procurement', 'po']),
   api('api_proc_rfp', 'dom_proc', 'RFP Workflow API', 'rfp', 'Request for proposal lifecycle.', 'internal', 'in_development', 'user_developer', ['procurement', 'rfp']),
-  // Sales
-  api('api_sales_crm', 'dom_sales', 'CRM Customer API', 'crm-customers', 'Customer master and contact data.', 'internal', 'published', 'user_developer', ['sales', 'crm']),
-  api('api_sales_orders', 'dom_sales', 'Sales Orders API', 'orders', 'Order history and pipeline.', 'internal', 'published', 'user_developer', ['sales', 'orders']),
-  api('api_sales_revenue', 'dom_sales', 'Revenue Analytics API', 'revenue', 'Revenue breakdown by region and product.', 'confidential', 'published', 'user_developer', ['sales', 'revenue'], 2, 'user_developer'),
-  api('api_sales_forecast', 'dom_sales', 'Sales Forecast API', 'sales-forecast', 'Sales forecasting models output.', 'confidential', 'deprecated', 'user_developer', ['sales', 'forecast'], 2, 'user_developer'),
+  // Sales — Murad
+  api('api_sales_crm', 'dom_sales', 'CRM Customer API', 'crm-customers', 'Customer master and contact data.', 'internal', 'published', 'user_murad', ['sales', 'crm']),
+  api('api_sales_orders', 'dom_sales', 'Sales Orders API', 'orders', 'Order history and pipeline.', 'internal', 'published', 'user_murad', ['sales', 'orders']),
+  api('api_sales_revenue', 'dom_sales', 'Revenue Analytics API', 'revenue', 'Revenue breakdown by region and product.', 'confidential', 'published', 'user_murad', ['sales', 'revenue'], 2, 'user_murad'),
+  api('api_sales_forecast', 'dom_sales', 'Sales Forecast API', 'sales-forecast', 'Sales forecasting models output.', 'confidential', 'deprecated', 'user_murad', ['sales', 'forecast'], 2, 'user_murad'),
   // AI Platform
   api('api_ai_llm', 'dom_ai', 'Enterprise LLM Completion API', 'llm-completion', 'Internal GPT-class model completions.', 'internal', 'published', 'user_llm_admin', ['ai', 'llm', 'model']),
   api('api_ai_embeddings', 'dom_ai', 'Embedding Service API', 'embeddings', 'Text embedding generation for semantic search.', 'internal', 'published', 'user_llm_admin', ['ai', 'embeddings']),

@@ -124,6 +124,16 @@ export function RoleSwitcher() {
 
               {u.display_name} — {roleLabels[u.portal_roles[0]]}
 
+              {u.portal_roles[0] === 'developer' && (
+
+                <span className={u.provider_domains.length > 0 ? 'text-brand-green' : 'text-slate-400'}>
+
+                  {u.provider_domains.length > 0 ? ' · publisher' : ' · consumer'}
+
+                </span>
+
+              )}
+
             </DropdownMenu.Item>
 
           ))}
@@ -142,7 +152,7 @@ export function RoleSwitcher() {
 
 export function Header() {
 
-  const { state, dispatch } = usePortal();
+  const { state, dispatch, syncStatus } = usePortal();
 
   const navigate = useNavigate();
 
@@ -157,6 +167,30 @@ export function Header() {
       <h1 className="text-lg font-semibold text-slate-800">Enterprise API Portal</h1>
 
       <div className="flex items-center gap-3">
+
+        <span
+          className={`hidden sm:inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            syncStatus === 'synced'
+              ? 'bg-brand-green-light text-brand-green'
+              : syncStatus === 'loading'
+                ? 'bg-slate-100 text-slate-500'
+                : 'bg-orange-100 text-orange-700'
+          }`}
+          title={
+            syncStatus === 'synced'
+              ? 'Changes are saved and shared across all users'
+              : syncStatus === 'loading'
+                ? 'Loading shared data…'
+                : 'Could not reach the shared data server'
+          }
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              syncStatus === 'synced' ? 'bg-brand-green' : syncStatus === 'loading' ? 'bg-slate-400 animate-pulse' : 'bg-orange-500'
+            }`}
+          />
+          {syncStatus === 'synced' ? 'Live' : syncStatus === 'loading' ? 'Syncing…' : 'Offline'}
+        </span>
 
         <button type="button" className="relative p-2 rounded-lg hover:bg-slate-50" aria-label="Notifications">
 

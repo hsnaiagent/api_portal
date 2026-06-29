@@ -24,6 +24,42 @@ export const users: User[] = [
 
   {
 
+    user_id: 'user_murad',
+
+    email: 'murad.alqahtani@example.com',
+
+    display_name: 'Murad',
+
+    portal_roles: ['developer'],
+
+    team_ids: ['team_fin_reporting', 'team_sales_crm'],
+
+    domain_id: 'dom_finance',
+
+    provider_domains: ['dom_finance', 'dom_sales'],
+
+  },
+
+  {
+
+    user_id: 'user_ali',
+
+    email: 'ali.alfarsi@example.com',
+
+    display_name: 'Ali',
+
+    portal_roles: ['developer'],
+
+    team_ids: ['team_sales_crm'],
+
+    domain_id: 'dom_sales',
+
+    provider_domains: [],
+
+  },
+
+  {
+
     user_id: 'user_llm_admin',
 
     email: 'saleh.hassan@example.com',
@@ -67,5 +103,3 @@ export function getUserById(id: string) {
   return users.find((u) => u.user_id === id);
 
 }
-
-

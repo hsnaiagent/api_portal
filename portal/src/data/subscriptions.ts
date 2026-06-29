@@ -58,11 +58,11 @@ export const initialSubscriptions: Subscription[] = [
 
     api_id: 'api_fin_budget',
 
-    application_id: 'app_fin_forecast',
+    application_id: 'app_hr_dashboard',
 
     requested_by_user_id: 'user_developer',
 
-    purpose: 'Quarterly budget vs actual forecasting',
+    purpose: 'Quarterly budget vs actual forecasting for HR workforce planning',
 
     min_api_version: '1.0.0',
 
@@ -108,9 +108,9 @@ export const initialSubscriptions: Subscription[] = [
 
     application_id: 'app_sales_insights',
 
-    requested_by_user_id: 'user_developer',
+    requested_by_user_id: 'user_ali',
 
-    purpose: 'CRM customer data for sales analytics',
+    purpose: 'CRM customer data for sales analytics dashboards',
 
     min_api_version: '1.0.0',
 
@@ -146,6 +146,100 @@ export const initialSubscriptions: Subscription[] = [
 
   },
 
+  {
+
+    subscription_id: 'sub_007',
+
+    api_id: 'api_hr_org',
+
+    application_id: 'app_fin_forecast',
+
+    requested_by_user_id: 'user_murad',
+
+    purpose: 'Org structure data for finance headcount cost allocation',
+
+    min_api_version: '1.0.0',
+
+    status: 'active',
+
+    provider_status: 'accepted',
+
+    approved_at: '2026-06-18T09:00:00Z',
+
+    created_at: '2026-06-17T14:00:00Z',
+
+  },
+
+  {
+
+    subscription_id: 'sub_008',
+
+    api_id: 'api_fin_rates',
+
+    application_id: 'app_sales_insights',
+
+    requested_by_user_id: 'user_ali',
+
+    purpose: 'FX rates for multi-currency sales revenue reporting',
+
+    min_api_version: '1.0.0',
+
+    status: 'active',
+
+    provider_status: 'accepted',
+
+    approved_at: '2026-06-19T11:00:00Z',
+
+    created_at: '2026-06-19T10:00:00Z',
+
+  },
+
+  {
+
+    subscription_id: 'sub_009',
+
+    api_id: 'api_hr_benefits',
+
+    application_id: 'app_sales_insights',
+
+    requested_by_user_id: 'user_ali',
+
+    purpose: 'Benefits enrollment status for sales compensation planning',
+
+    min_api_version: '1.0.0',
+
+    status: 'workflow_in_progress',
+
+    provider_status: 'pending',
+
+    workflow_instance_id: 'wf_004',
+
+    created_at: '2026-06-24T09:00:00Z',
+
+  },
+
+  {
+
+    subscription_id: 'sub_010',
+
+    api_id: 'api_ops_production',
+
+    application_id: 'app_ops_monitor',
+
+    requested_by_user_id: 'user_murad',
+
+    purpose: 'Daily production metrics for plant operations dashboard',
+
+    min_api_version: '1.0.0',
+
+    status: 'active',
+
+    provider_status: 'accepted',
+
+    approved_at: '2026-06-12T08:00:00Z',
+
+    created_at: '2026-06-10T08:00:00Z',
+
+  },
+
 ];
-
-

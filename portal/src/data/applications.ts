@@ -40,7 +40,7 @@ export const initialApplications: Application[] = [
 
       'Integrates budget forecasts with actuals for quarterly financial planning reports.',
 
-    owner_user_id: 'user_developer',
+    owner_user_id: 'user_murad',
 
     environment: 'sandbox',
 
@@ -60,7 +60,7 @@ export const initialApplications: Application[] = [
 
     application_description: 'Pulls CRM order data and customer metrics for sales team dashboards.',
 
-    owner_user_id: 'user_developer',
+    owner_user_id: 'user_ali',
 
     environment: 'production',
 
@@ -68,6 +68,26 @@ export const initialApplications: Application[] = [
 
   },
 
+  {
+
+    application_id: 'app_ops_monitor',
+
+    team_id: 'team_ops_plant',
+
+    name: 'Plant Operations Monitor',
+
+    description: 'Real-time production and safety metrics',
+
+    application_description:
+
+      'Monitors daily production output and safety incident trends across plant operations.',
+
+    owner_user_id: 'user_murad',
+
+    environment: 'sandbox',
+
+    status: 'active',
+
+  },
+
 ];
-
-
