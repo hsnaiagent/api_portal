@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { usePortal } from '@/store/AppStore';
+import { ListFilterBar } from '@/components/shared/ListFilterBar';
 import type { Application } from '@/types';
 
 export function ApplicationsPage() {
@@ -9,6 +10,23 @@ export function ApplicationsPage() {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [appDesc, setAppDesc] = useState('');
+  const [query, setQuery] = useState('');
+  const [envFilter, setEnvFilter] = useState('');
+
+  const filtered = useMemo(() => {
+    return apps.filter((app) => {
+      if (envFilter && app.environment !== envFilter) return false;
+      if (query.trim()) {
+        const q = query.toLowerCase();
+        return (
+          app.name.toLowerCase().includes(q)
+          || (app.description?.toLowerCase().includes(q) ?? false)
+          || (app.application_description?.toLowerCase().includes(q) ?? false)
+        );
+      }
+      return true;
+    });
+  }, [apps, query, envFilter]);
 
   const create = () => {
     const app: Application = {
@@ -28,6 +46,8 @@ export function ApplicationsPage() {
     setAppDesc('');
   };
 
+  const hasActiveFilters = Boolean(query || envFilter);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -35,8 +55,25 @@ export function ApplicationsPage() {
         <button type="button" onClick={() => setShowForm(true)} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm font-medium">Register Application</button>
       </div>
       <p className="text-sm text-slate-500">Applications are machine consumers of APIs. The application description powers AI personalization across SDK, sandbox, and Application Planner.</p>
+      <ListFilterBar
+        query={query}
+        onQueryChange={setQuery}
+        placeholder="Search applications..."
+        hasActiveFilters={hasActiveFilters}
+        onClear={() => {
+          setQuery('');
+          setEnvFilter('');
+        }}
+        resultLabel={`${filtered.length} of ${apps.length} applications`}
+      >
+        <select value={envFilter} onChange={(e) => setEnvFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+          <option value="">All environments</option>
+          <option value="sandbox">Sandbox</option>
+          <option value="production">Production</option>
+        </select>
+      </ListFilterBar>
       <div className="grid sm:grid-cols-2 gap-4">
-        {apps.map((app) => (
+        {filtered.map((app) => (
           <div key={app.application_id} className="rounded-xl border border-slate-200 bg-brand-white p-4">
             <h3 className="font-semibold">{app.name}</h3>
             <p className="text-sm text-slate-600 mt-1">{app.description}</p>
@@ -47,6 +84,7 @@ export function ApplicationsPage() {
           </div>
         ))}
       </div>
+      {filtered.length === 0 && <p className="text-slate-500">No applications match your filters.</p>}
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortal } from '@/store/AppStore';
 import { getAIResponse } from '@/mocks/AIAdapter';
+import { generateSearchIndex } from '@/lib/gemini';
 import { AIThinkingOverlay } from '@/components/ai/AIThinkingOverlay';
 import { AIBadge } from '@/components/ai/AIBadge';
 import { CLASSIFICATIONS } from '@/config/classification';
@@ -26,7 +27,17 @@ export function RegisterApiPage({ fixedDomainId, successRoute }: { fixedDomainId
 
   const runAI = async (agent: Parameters<typeof getAIResponse>[0]) => {
     setLoading(true);
-    const res = await getAIResponse(agent, { name, description, spec });
+    const res = await getAIResponse(agent, {
+      name,
+      description,
+      spec,
+      existingApis: state.apis.map((item) => ({
+        api_id: item.api_id,
+        name: item.name,
+        description: item.description,
+        tags: item.tags,
+      })),
+    });
     setLoading(false);
     return res;
   };
@@ -71,6 +82,18 @@ export function RegisterApiPage({ fixedDomainId, successRoute }: { fixedDomainId
       endpoints: [{ method: 'GET', path: `/v1/${name.toLowerCase().replace(/\s+/g, '-')}`, summary: name, responseExample: { ok: true } }],
     };
     dispatch({ type: 'ADD_API', payload: api });
+
+    void (async () => {
+      const existingApiIds = [...state.apis.map((item) => item.api_id), api.api_id];
+      const searchIndex = await generateSearchIndex(name, description, existingApiIds);
+      if (searchIndex) {
+        dispatch({
+          type: 'UPDATE_API',
+          payload: { api_id: api.api_id, patch: { search_index: searchIndex } },
+        });
+      }
+    })();
+
     navigate(successRoute ?? ROUTES.provider.myApis);
   };
 

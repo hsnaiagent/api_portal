@@ -19,6 +19,7 @@ export const AI_CONFIG = {
   enabled: true,
   responseDelayMs: 1200,
   typewriterSpeedMs: 18,
+  geminiModel: 'gemini-2.0-flash',
   agents: {
     AI_1_ApplicationPlanner: true,
     AI_2_SemanticSearch: true,

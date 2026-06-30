@@ -3,9 +3,8 @@ import { Search } from 'lucide-react';
 import { usePortal } from '@/store/AppStore';
 import { useVisibleApis } from '@/hooks/useVisibleApis';
 import { ApiCard } from '@/components/shared/ApiCard';
-import { AIThinkingOverlay } from '@/components/ai/AIThinkingOverlay';
 import { AIBadge } from '@/components/ai/AIBadge';
-import { getAIResponse } from '@/mocks/AIAdapter';
+import { matchesSearchIndex, getSearchMatchSummary } from '@/lib/search-index';
 import { domains } from '@/data/domains';
 import { CLASSIFICATIONS } from '@/config/classification';
 import type { CatalogFilters, Classification } from '@/types';
@@ -14,32 +13,40 @@ export function CatalogPage() {
   const { state, dispatch } = usePortal();
   const visible = useVisibleApis(state.apis);
   const { query, domainFilter, classFilter, aiContext } = state.catalogFilters;
-  const [aiLoading, setAiLoading] = useState(false);
+  const [searchContext, setSearchContext] = useState<string>();
 
   const setFilters = (patch: Partial<CatalogFilters>) => {
     dispatch({ type: 'SET_CATALOG_FILTERS', payload: { ...state.catalogFilters, ...patch } });
   };
 
-  const search = async () => {
-    if (!query.trim()) return;
-    setAiLoading(true);
-    await getAIResponse('AI_15_NaturalLanguageSearch', { query });
-    const res = await getAIResponse('AI_2_SemanticSearch', { query });
-    setFilters({ aiContext: res?.text });
-    setAiLoading(false);
+  const runSearch = () => {
+    if (!query.trim()) {
+      setSearchContext(undefined);
+      setFilters({ aiContext: undefined });
+      return;
+    }
+
+    const matches = visible.filter((api) => matchesSearchIndex(api, query));
+    const summary =
+      matches.length > 0
+        ? getSearchMatchSummary(matches[0], query) ??
+          `Found ${matches.length} API${matches.length === 1 ? '' : 's'} matching "${query}" via indexed search terms.`
+        : `No APIs matched "${query}" in name, description, tags, or pre-computed search index.`;
+
+    setSearchContext(summary);
+    setFilters({ aiContext: summary });
   };
 
   const filtered = useMemo(() => {
     return visible.filter((api) => {
       if (domainFilter && api.domain_id !== domainFilter) return false;
       if (classFilter && api.classification !== classFilter) return false;
-      if (query) {
-        const q = query.toLowerCase();
-        return api.name.toLowerCase().includes(q) || api.description.toLowerCase().includes(q) || api.tags.some((t) => t.includes(q));
-      }
+      if (query) return matchesSearchIndex(api, query);
       return true;
     });
   }, [visible, query, domainFilter, classFilter]);
+
+  const contextMessage = searchContext ?? aiContext;
 
   return (
     <div className="space-y-6">
@@ -51,17 +58,21 @@ export function CatalogPage() {
           <input
             value={query}
             onChange={(e) => setFilters({ query: e.target.value })}
-            onKeyDown={(e) => e.key === 'Enter' && search()}
-            placeholder='Try: "APIs for employee salary statistics" or keyword search'
+            onKeyDown={(e) => e.key === 'Enter' && runSearch()}
+            placeholder='Try: "compensation", "WPS", or "employee salary"'
             className="w-full rounded-lg border border-slate-200 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-brand-blue"
           />
         </div>
-        <button type="button" onClick={search} className="rounded-lg bg-brand-blue text-brand-white px-4 py-2 text-sm font-medium hover:bg-brand-blue-dark flex items-center gap-2 justify-center">
-          <AIBadge label="AI Search" /> Search
+        <button type="button" onClick={runSearch} className="rounded-lg bg-brand-blue text-brand-white px-4 py-2 text-sm font-medium hover:bg-brand-blue-dark flex items-center gap-2 justify-center">
+          <AIBadge label="Indexed Search" /> Search
         </button>
       </div>
 
-      <AIThinkingOverlay loading={aiLoading} text={!aiLoading ? aiContext : undefined} />
+      {contextMessage && (
+        <p className="text-sm text-slate-600 rounded-lg border border-brand-blue-light bg-brand-blue-light/30 px-4 py-3">
+          {contextMessage}
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <select value={domainFilter} onChange={(e) => setFilters({ domainFilter: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">

@@ -146,6 +146,24 @@ export interface OpenAPIEndpoint {
 
 
 
+export interface ApiSearchIndex {
+
+  fluctuations: string[];
+
+  synonyms: string[];
+
+  business_terms: string[];
+
+  related_api_ids: string[];
+
+  generated_at: string;
+
+  model: string;
+
+}
+
+
+
 export interface API {
 
   api_id: string;
@@ -173,6 +191,8 @@ export interface API {
   version: string;
 
   endpoints: OpenAPIEndpoint[];
+
+  search_index?: ApiSearchIndex;
 
 }
 

@@ -15,7 +15,11 @@ export function AuditLogTable({ logs }: { logs: AuditLog[] }) {
           </tr>
         </thead>
         <tbody>
-          {logs.map((log) => (
+          {logs.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="px-4 py-8 text-center text-slate-500">No audit entries match your filters.</td>
+            </tr>
+          ) : logs.map((log) => (
             <tr key={log.audit_id} className="border-t border-slate-100 hover:bg-slate-50">
               <td className="px-4 py-3 whitespace-nowrap">{formatDate(log.timestamp)}</td>
               <td className="px-4 py-3">{log.actor_user_id ? getUserById(log.actor_user_id)?.display_name ?? log.actor_user_id : log.actor_type}</td>

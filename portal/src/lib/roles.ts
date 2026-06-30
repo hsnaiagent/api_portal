@@ -11,9 +11,7 @@ export function getManagedApis(apis: API[], user: User | null, role: string | nu
   if (role === 'developer') {
 
     return apis.filter(
-
-      (a) => user.provider_domains.includes(a.domain_id) || a.owner_user_id === user.user_id,
-
+      (a) => a.domain_id === user.domain_id && user.provider_domains.includes(user.domain_id),
     );
 
   }

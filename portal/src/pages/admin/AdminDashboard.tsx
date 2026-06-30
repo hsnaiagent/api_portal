@@ -11,11 +11,18 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAIResponse('AI_13_CatalogHealthSummary', {}).then((r) => {
+    getAIResponse('AI_13_CatalogHealthSummary', {
+      totalApis: state.apis.length,
+      publishedApis: state.apis.filter((a) => a.lifecycle_status === 'published').length,
+      proposedApis: state.apis.filter((a) => a.lifecycle_status === 'proposed').length,
+      deprecatedApis: state.apis.filter((a) => a.lifecycle_status === 'deprecated').length,
+      subscriptions: state.subscriptions.length,
+      pendingProviderRequests: state.providerAccessRequests.filter((r) => r.status === 'pending').length,
+    }).then((r) => {
       setHealth(r?.text);
       setLoading(false);
     });
-  }, []);
+  }, [state.apis, state.subscriptions, state.providerAccessRequests]);
 
   return (
     <div className="space-y-6">

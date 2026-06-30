@@ -20,6 +20,8 @@ import { SDKPanel } from '@/components/sdk/SDKPanel';
 
 import { LLMSubscriptionForm, emptyLlmForm, isLlmFormComplete } from '@/components/shared/LLMSubscriptionForm';
 
+import { getRecommendationsFromIndex } from '@/lib/search-index';
+
 import { getAIResponse } from '@/mocks/AIAdapter';
 
 import { triggerWorkflow } from '@/mocks/WorkflowAdapter';
@@ -96,11 +98,9 @@ export function ApiDetailPage() {
 
 
 
-  const loadRecommendations = async () => {
+  const loadRecommendations = () => {
 
-    const res = await getAIResponse('AI_4_Recommendations', { api_id: api.api_id });
-
-    setRecommendations(res?.items ?? []);
+    setRecommendations(getRecommendationsFromIndex(api, state.apis));
 
   };
 

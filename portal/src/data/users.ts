@@ -36,7 +36,7 @@ export const users: User[] = [
 
     domain_id: 'dom_finance',
 
-    provider_domains: ['dom_finance', 'dom_sales'],
+    provider_domains: ['dom_finance'],
 
   },
 

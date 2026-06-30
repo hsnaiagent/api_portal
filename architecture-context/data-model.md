@@ -123,8 +123,20 @@ Central registry entity for a logical API.
 | `data_owner_user_id` | UUID | No | FK → User (for Confidential/Restricted) |
 | `gateway_tier` | Integer | Yes | 1, 2, or 3 (ADR-005) |
 | `tags` | String[] | No | |
+| `search_index` | JSON | No | Pre-computed search terms for rule-based catalog search (see below) |
 | `created_at` | Timestamp | Yes | |
 | `updated_at` | Timestamp | Yes | |
+
+**`search_index` JSON shape (optional):**
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `fluctuations` | String[] | Typos, hyphenations, casing variants of the API name |
+| `synonyms` | String[] | Alternative vocabulary users might search with |
+| `business_terms` | String[] | Domain jargon, acronyms, department-specific terms |
+| `related_api_ids` | String[] | Pre-computed related API recommendations |
+| `generated_at` | Timestamp | When the index was generated |
+| `model` | String | Source model (e.g. `gemini-2.0-flash`) or `hardcoded` for seed data |
 
 **Lifecycle Status Enum:**
 `draft`, `proposed`, `under_review`, `approved`, `in_development`, `in_testing`, `published`, `deprecated`, `retired`, `rejected`, `emergency_retired`
