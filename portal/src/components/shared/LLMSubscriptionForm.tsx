@@ -36,6 +36,19 @@ const emptyForm: LLMSubscriptionFormData = {
 
 
 
+const FIELD_LABELS: Partial<Record<keyof LLMSubscriptionFormData, string>> = {
+  use_case_name: 'Use case name',
+  admin_area: 'Admin area',
+  contact: 'Contact email',
+  deployment_date: 'Deployment date',
+  task_description: 'Task description',
+  frequency_before: 'Frequency before',
+  time_before_minutes: 'Time before',
+  time_after_minutes: 'Time after',
+  expected_users: 'Expected users',
+  estimated_value: 'Estimated value',
+};
+
 interface LLMSubscriptionFormProps {
 
   value: LLMSubscriptionFormData;
@@ -53,6 +66,8 @@ interface LLMSubscriptionFormProps {
 export function LLMSubscriptionForm({ value, onChange, readOnly = false, showRoi = true }: LLMSubscriptionFormProps) {
 
   const roi = useMemo(() => calculateLlmRoi(value), [value]);
+
+  const errors = readOnly ? {} : validateLlmForm(value);
 
   const adminAreas = domains.filter((d) => d.domain_id !== 'dom_ai').map((d) => d.name);
 
@@ -372,6 +387,26 @@ export function LLMSubscriptionForm({ value, onChange, readOnly = false, showRoi
 
       )}
 
+      {!readOnly && Object.keys(errors).length > 0 && (
+
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+
+          <p className="font-medium">Please complete the following:</p>
+
+          <ul className="list-disc list-inside mt-1">
+
+            {(Object.entries(errors) as [keyof LLMSubscriptionFormData, string][]).map(([key, msg]) => (
+
+              <li key={key}>{FIELD_LABELS[key] ?? key}: {msg}</li>
+
+            ))}
+
+          </ul>
+
+        </div>
+
+      )}
+
     </div>
 
   );
@@ -380,34 +415,26 @@ export function LLMSubscriptionForm({ value, onChange, readOnly = false, showRoi
 
 
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function validateLlmForm(form: LLMSubscriptionFormData): Partial<Record<keyof LLMSubscriptionFormData, string>> {
+  const errors: Partial<Record<keyof LLMSubscriptionFormData, string>> = {};
+  if (!form.use_case_name.trim()) errors.use_case_name = 'Required';
+  if (!form.admin_area.trim()) errors.admin_area = 'Select an admin area';
+  if (!form.contact.trim()) errors.contact = 'Required';
+  else if (!EMAIL_RE.test(form.contact.trim())) errors.contact = 'Enter a valid email address';
+  if (!form.deployment_date) errors.deployment_date = 'Required';
+  if (!form.task_description.trim()) errors.task_description = 'Describe the task';
+  if (!(form.frequency_before > 0)) errors.frequency_before = 'Must be greater than 0';
+  if (!(form.time_before_minutes > 0)) errors.time_before_minutes = 'Must be greater than 0';
+  if (form.time_after_minutes > form.time_before_minutes) errors.time_after_minutes = 'Must not exceed time before';
+  if (!(form.expected_users > 0)) errors.expected_users = 'At least 1 user';
+  if (!form.estimated_value.trim()) errors.estimated_value = 'Required';
+  return errors;
+}
+
 export function isLlmFormComplete(form: LLMSubscriptionFormData) {
-
-  return (
-
-    form.use_case_name.trim() &&
-
-    form.admin_area.trim() &&
-
-    form.contact.trim() &&
-
-    form.deployment_date &&
-
-    form.task_description.trim() &&
-
-    form.frequency_before > 0 &&
-
-    form.frequency_after >= 0 &&
-
-    form.time_before_minutes > 0 &&
-
-    form.time_after_minutes >= 0 &&
-
-    form.expected_users > 0 &&
-
-    form.estimated_value.trim()
-
-  );
-
+  return Object.keys(validateLlmForm(form)).length === 0;
 }
 
 
