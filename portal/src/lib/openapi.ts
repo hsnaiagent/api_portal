@@ -76,8 +76,14 @@ export function parseOpenApiSpec(raw: string): ParsedSpec | null {
 }
 
 /** Lightweight validation for the spec textarea. JSON is fully validated; non-JSON (YAML) is allowed but flagged. */
-export function describeSpec(raw: string): { ok: boolean; note?: string; endpointCount: number; version?: string } {
-  if (!raw.trim()) return { ok: false, note: 'Paste an OpenAPI spec to continue.', endpointCount: 0 };
+export function describeSpec(raw: string): {
+  ok: boolean;
+  note?: string;
+  endpointCount: number;
+  version?: string;
+} {
+  if (!raw.trim())
+    return { ok: false, note: 'Paste an OpenAPI spec to continue.', endpointCount: 0 };
   const parsed = parseOpenApiSpec(raw);
   if (!parsed) {
     return {

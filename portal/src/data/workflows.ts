@@ -1,11 +1,7 @@
 import type { WorkflowInstance } from '@/types';
 
-
-
 export const initialWorkflows: WorkflowInstance[] = [
-
   {
-
     workflow_instance_id: 'wf_001',
 
     external_workflow_id: 'ext_wf_001',
@@ -20,18 +16,12 @@ export const initialWorkflows: WorkflowInstance[] = [
 
     status: 'in_progress',
 
-    approvers: [
-
-      { user_id: 'user_developer', role: 'data_owner', decision: 'pending' },
-
-    ],
+    approvers: [{ user_id: 'user_developer', role: 'data_owner', decision: 'pending' }],
 
     triggered_at: '2026-06-20T14:05:00Z',
-
   },
 
   {
-
     workflow_instance_id: 'wf_002',
 
     external_workflow_id: 'ext_wf_002',
@@ -47,19 +37,21 @@ export const initialWorkflows: WorkflowInstance[] = [
     status: 'approved',
 
     approvers: [
-
-      { user_id: 'user_murad', role: 'data_owner', decision: 'approved', decided_at: '2026-06-23T09:00:00Z', comment: 'Approved for HR forecasting integration' },
-
+      {
+        user_id: 'user_murad',
+        role: 'data_owner',
+        decision: 'approved',
+        decided_at: '2026-06-23T09:00:00Z',
+        comment: 'Approved for HR forecasting integration',
+      },
     ],
 
     triggered_at: '2026-06-22T11:05:00Z',
 
     completed_at: '2026-06-23T09:00:00Z',
-
   },
 
   {
-
     workflow_instance_id: 'wf_003',
 
     external_workflow_id: 'ext_wf_003',
@@ -75,19 +67,21 @@ export const initialWorkflows: WorkflowInstance[] = [
     status: 'rejected',
 
     approvers: [
-
-      { user_id: 'user_murad', role: 'team_lead', decision: 'rejected', decided_at: '2026-06-16T10:00:00Z', comment: 'Purpose not aligned with CRM data use policy' },
-
+      {
+        user_id: 'user_murad',
+        role: 'team_lead',
+        decision: 'rejected',
+        decided_at: '2026-06-16T10:00:00Z',
+        comment: 'Purpose not aligned with CRM data use policy',
+      },
     ],
 
     triggered_at: '2026-06-15T16:05:00Z',
 
     completed_at: '2026-06-16T10:00:00Z',
-
   },
 
   {
-
     workflow_instance_id: 'wf_004',
 
     external_workflow_id: 'ext_wf_004',
@@ -102,14 +96,8 @@ export const initialWorkflows: WorkflowInstance[] = [
 
     status: 'in_progress',
 
-    approvers: [
-
-      { user_id: 'user_developer', role: 'data_owner', decision: 'pending' },
-
-    ],
+    approvers: [{ user_id: 'user_developer', role: 'data_owner', decision: 'pending' }],
 
     triggered_at: '2026-06-24T09:05:00Z',
-
   },
-
 ];

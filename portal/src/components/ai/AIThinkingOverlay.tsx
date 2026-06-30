@@ -36,7 +36,9 @@ export function AIThinkingOverlay({
           <p className="text-sm font-medium text-purple-800 flex items-center gap-2">
             <Sparkles className="h-4 w-4" /> AI analyzing...
           </p>
-          <p className="text-xs text-purple-600 mt-1">Matching against catalog and governance rules</p>
+          <p className="text-xs text-purple-600 mt-1">
+            Matching against catalog and governance rules
+          </p>
         </div>
       </div>
     );

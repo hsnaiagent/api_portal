@@ -156,7 +156,9 @@ Question: ${JSON.stringify(input.query ?? input)}
 Return JSON: { "text": "helpful answer", "links": [{ "label": "link text", "path": "/route" }] }`,
 };
 
-const PRECOMPUTE_AGENT_PROMPTS: Partial<Record<AIAgentId, (input: Record<string, unknown>) => string>> = {
+const PRECOMPUTE_AGENT_PROMPTS: Partial<
+  Record<AIAgentId, (input: Record<string, unknown>) => string>
+> = {
   AI_6_DescriptionGenerator: (input) =>
     `Write a concise API description for an enterprise API catalog entry.
 Name: ${JSON.stringify(input.name ?? '')}

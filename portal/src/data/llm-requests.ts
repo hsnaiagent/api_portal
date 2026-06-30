@@ -1,11 +1,7 @@
 import type { LLMSubscriptionRequest } from '@/types';
 
-
-
 export const initialLLMSubscriptionRequests: LLMSubscriptionRequest[] = [
-
   {
-
     llm_request_id: 'llm_req_001',
 
     subscription_id: 'sub_004',
@@ -47,11 +43,9 @@ export const initialLLMSubscriptionRequests: LLMSubscriptionRequest[] = [
     created_at: '2026-06-08T08:00:00Z',
 
     reviewed_at: '2026-06-09T11:00:00Z',
-
   },
 
   {
-
     llm_request_id: 'llm_req_002',
 
     subscription_id: 'sub_006',
@@ -70,7 +64,8 @@ export const initialLLMSubscriptionRequests: LLMSubscriptionRequest[] = [
 
     deployment_date: '2026-08-15',
 
-    task_description: 'Answer HR policy questions using retrieval-augmented generation over internal policy corpus.',
+    task_description:
+      'Answer HR policy questions using retrieval-augmented generation over internal policy corpus.',
 
     frequency_before: 20,
 
@@ -87,9 +82,5 @@ export const initialLLMSubscriptionRequests: LLMSubscriptionRequest[] = [
     status: 'pending',
 
     created_at: '2026-06-26T10:00:00Z',
-
   },
-
 ];
-
-

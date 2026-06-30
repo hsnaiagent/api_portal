@@ -1,34 +1,39 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* ── Brand Colors.csv palette ── */
-  --color-brand-accent: #84BD00;
-  --color-brand-green: #00843D;
+  --color-brand-accent: #84bd00;
+  --color-brand-green: #00843d;
   --color-brand-green-dark: #006830;
-  --color-brand-green-light: #E6F2EC;
-  --color-brand-blue: #00A3E0;
-  --color-brand-blue-dark: #0033A0;
-  --color-brand-blue-light: #E6F4FB;
-  --color-brand-gray: #5F6369;
-  --color-brand-neutral-gray: #C0C0C0;
-  --color-brand-light-gray: #DADADA;
+  --color-brand-green-light: #e6f2ec;
+  --color-brand-blue: #00a3e0;
+  --color-brand-blue-dark: #0033a0;
+  --color-brand-blue-light: #e6f4fb;
+  --color-brand-gray: #5f6369;
+  --color-brand-neutral-gray: #c0c0c0;
+  --color-brand-light-gray: #dadada;
   --color-brand-dark-gray: #323232;
-  --color-brand-white: #FFFFFF;
+  --color-brand-white: #ffffff;
 
   /* Map Tailwind slate neutrals to brand grays (existing slate-* classes stay on-palette) */
-  --color-slate-50: #FAFAFA;
-  --color-slate-100: #F3F3F3;
-  --color-slate-200: #DADADA;
-  --color-slate-400: #C0C0C0;
-  --color-slate-500: #5F6369;
-  --color-slate-600: #5F6369;
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f3f3f3;
+  --color-slate-200: #dadada;
+  --color-slate-400: #c0c0c0;
+  --color-slate-500: #5f6369;
+  --color-slate-600: #5f6369;
   --color-slate-700: #323232;
   --color-slate-800: #323232;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
   background: var(--color-slate-50);
   color: var(--color-brand-dark-gray);
 }

@@ -1,27 +1,16 @@
 export type Classification = 'restricted' | 'confidential' | 'internal' | 'public';
 
 export type LifecycleStatus =
-
   | 'draft'
-
   | 'proposed'
-
   | 'under_review'
-
   | 'approved'
-
   | 'in_development'
-
   | 'in_testing'
-
   | 'published'
-
   | 'deprecated'
-
   | 'retired'
-
   | 'rejected'
-
   | 'emergency_retired';
 
 export type PortalRole = 'developer' | 'llm_admin' | 'portal_admin';
@@ -29,26 +18,19 @@ export type PortalRole = 'developer' | 'llm_admin' | 'portal_admin';
 export type GatewayTier = 1 | 2 | 3;
 
 export type SubscriptionStatus =
-
   | 'pending'
-
   | 'workflow_in_progress'
-
   | 'workflow_approved'
-
   | 'workflow_rejected'
-
   | 'provider_pending'
-
   | 'active'
-
   | 'revoked'
-
   | 'expired';
 
 export type ProviderStatus = 'pending' | 'accepted' | 'rejected';
 
-export type WorkflowStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'cancelled' | 'expired';
+export type WorkflowStatus =
+  'pending' | 'in_progress' | 'approved' | 'rejected' | 'cancelled' | 'expired';
 
 export type SDKLanguage = 'curl' | 'python' | 'javascript' | 'typescript' | 'java' | 'go';
 
@@ -56,10 +38,7 @@ export type ProviderAccessStatus = 'pending' | 'approved' | 'rejected';
 
 export type LLMRequestStatus = 'pending' | 'approved' | 'rejected';
 
-
-
 export interface Domain {
-
   domain_id: string;
 
   name: string;
@@ -67,13 +46,9 @@ export interface Domain {
   code: string;
 
   description: string;
-
 }
 
-
-
 export interface Team {
-
   team_id: string;
 
   domain_id: string;
@@ -81,13 +56,9 @@ export interface Team {
   name: string;
 
   description?: string;
-
 }
 
-
-
 export interface User {
-
   user_id: string;
 
   email: string;
@@ -101,13 +72,9 @@ export interface User {
   domain_id: string;
 
   provider_domains: string[];
-
 }
 
-
-
 export interface Application {
-
   application_id: string;
 
   team_id: string;
@@ -123,13 +90,9 @@ export interface Application {
   environment: 'sandbox' | 'production';
 
   status: 'active' | 'suspended' | 'deleted';
-
 }
 
-
-
 export interface OpenAPIEndpoint {
-
   method: string;
 
   path: string;
@@ -141,13 +104,9 @@ export interface OpenAPIEndpoint {
   requestBody?: object;
 
   responseExample?: object;
-
 }
 
-
-
 export interface ApiSearchIndex {
-
   fluctuations: string[];
 
   synonyms: string[];
@@ -159,25 +118,17 @@ export interface ApiSearchIndex {
   generated_at: string;
 
   model: string;
-
 }
 
-
-
 export interface LlmConfig {
-
   model?: string;
 
   rate_limit_per_min?: number;
 
   monthly_token_budget?: number;
-
 }
 
-
-
 export interface API {
-
   api_id: string;
 
   domain_id: string;
@@ -207,13 +158,9 @@ export interface API {
   search_index?: ApiSearchIndex;
 
   llm_config?: LlmConfig;
-
 }
 
-
-
 export interface Subscription {
-
   subscription_id: string;
 
   api_id: string;
@@ -235,13 +182,9 @@ export interface Subscription {
   approved_at?: string;
 
   created_at: string;
-
 }
 
-
-
 export interface ProviderAccessRequest {
-
   request_id: string;
 
   user_id: string;
@@ -259,13 +202,9 @@ export interface ProviderAccessRequest {
   created_at: string;
 
   reviewed_at?: string;
-
 }
 
-
-
 export interface LLMSubscriptionRequest {
-
   llm_request_id: string;
 
   subscription_id: string;
@@ -307,13 +246,9 @@ export interface LLMSubscriptionRequest {
   created_at: string;
 
   reviewed_at?: string;
-
 }
 
-
-
 export interface WorkflowApprover {
-
   user_id: string;
 
   role: string;
@@ -323,13 +258,9 @@ export interface WorkflowApprover {
   decided_at?: string;
 
   comment?: string;
-
 }
 
-
-
 export interface WorkflowInstance {
-
   workflow_instance_id: string;
 
   external_workflow_id?: string;
@@ -349,13 +280,9 @@ export interface WorkflowInstance {
   triggered_at: string;
 
   completed_at?: string;
-
 }
 
-
-
 export interface Credential {
-
   credential_id: string;
 
   subscription_id: string;
@@ -369,13 +296,9 @@ export interface Credential {
   client_secret_masked: string;
 
   status: 'active' | 'rotated' | 'revoked';
-
 }
 
-
-
 export interface AuditLog {
-
   audit_id: string;
 
   timestamp: string;
@@ -391,13 +314,9 @@ export interface AuditLog {
   entity_id: string;
 
   payload?: Record<string, unknown>;
-
 }
 
-
-
 export interface Notification {
-
   id: string;
 
   title: string;
@@ -409,13 +328,9 @@ export interface Notification {
   created_at: string;
 
   read: boolean;
-
 }
 
-
-
 export interface AIResponse {
-
   text?: string;
 
   items?: { id: string; label: string; score?: number; reason?: string }[];
@@ -429,13 +344,9 @@ export interface AIResponse {
   code?: string;
 
   links?: { label: string; path: string }[];
-
 }
 
-
-
 export interface CatalogFilters {
-
   query: string;
 
   domainFilter: string;
@@ -443,13 +354,9 @@ export interface CatalogFilters {
   classFilter: string;
 
   aiContext?: string;
-
 }
 
-
-
 export interface PortalState {
-
   currentUser: User | null;
 
   activeRole: PortalRole | null;
@@ -481,17 +388,18 @@ export interface PortalState {
   plannerSelectedApiIds: string[];
 
   catalogFilters: CatalogFilters;
-
 }
 
-
-
 export type LLMSubscriptionFormData = Omit<
-
   LLMSubscriptionRequest,
-
-  'llm_request_id' | 'subscription_id' | 'api_id' | 'requested_by_user_id' | 'application_id' | 'status' | 'reviewer_id' | 'reviewer_comment' | 'created_at' | 'reviewed_at'
-
+  | 'llm_request_id'
+  | 'subscription_id'
+  | 'api_id'
+  | 'requested_by_user_id'
+  | 'application_id'
+  | 'status'
+  | 'reviewer_id'
+  | 'reviewer_comment'
+  | 'created_at'
+  | 'reviewed_at'
 >;
-
-

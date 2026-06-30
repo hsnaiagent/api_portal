@@ -1,9 +1,6 @@
 import type { LifecycleStatus, PortalRole } from '@/types';
 
-
-
 export const LIFECYCLE_LABELS: Record<LifecycleStatus, string> = {
-
   draft: 'Draft',
 
   proposed: 'Proposed',
@@ -25,13 +22,9 @@ export const LIFECYCLE_LABELS: Record<LifecycleStatus, string> = {
   rejected: 'Rejected',
 
   emergency_retired: 'Emergency Retired',
-
 };
 
-
-
 export const LIFECYCLE_COLORS: Record<LifecycleStatus, string> = {
-
   draft: 'bg-slate-100 text-slate-700',
 
   proposed: 'bg-brand-blue-light text-brand-blue-dark',
@@ -53,23 +46,15 @@ export const LIFECYCLE_COLORS: Record<LifecycleStatus, string> = {
   rejected: 'bg-red-100 text-red-700',
 
   emergency_retired: 'bg-red-200 text-red-900',
-
 };
 
-
-
 export interface LifecycleTransition {
-
   next: LifecycleStatus[];
 
   allowedRoles: PortalRole[];
-
 }
 
-
-
 export const LIFECYCLE_TRANSITIONS: Partial<Record<LifecycleStatus, LifecycleTransition>> = {
-
   draft: { next: ['proposed'], allowedRoles: ['developer', 'llm_admin', 'portal_admin'] },
 
   proposed: { next: ['under_review', 'rejected'], allowedRoles: ['portal_admin'] },
@@ -78,16 +63,22 @@ export const LIFECYCLE_TRANSITIONS: Partial<Record<LifecycleStatus, LifecycleTra
 
   approved: { next: ['in_development'], allowedRoles: ['developer', 'llm_admin', 'portal_admin'] },
 
-  in_development: { next: ['in_testing'], allowedRoles: ['developer', 'llm_admin', 'portal_admin'] },
+  in_development: {
+    next: ['in_testing'],
+    allowedRoles: ['developer', 'llm_admin', 'portal_admin'],
+  },
 
-  in_testing: { next: ['published', 'in_development'], allowedRoles: ['llm_admin', 'portal_admin'] },
+  in_testing: {
+    next: ['published', 'in_development'],
+    allowedRoles: ['llm_admin', 'portal_admin'],
+  },
 
-  published: { next: ['deprecated', 'emergency_retired'], allowedRoles: ['developer', 'llm_admin', 'portal_admin'] },
+  published: {
+    next: ['deprecated', 'emergency_retired'],
+    allowedRoles: ['developer', 'llm_admin', 'portal_admin'],
+  },
 
   deprecated: { next: ['retired'], allowedRoles: ['developer', 'llm_admin', 'portal_admin'] },
 
   rejected: { next: ['draft'], allowedRoles: ['developer', 'llm_admin', 'portal_admin'] },
-
 };
-
-

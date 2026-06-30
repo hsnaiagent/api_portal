@@ -1,9 +1,7 @@
 export const ROUTES = {
-
   login: '/login',
 
   consumer: {
-
     root: '/consumer',
 
     dashboard: '/consumer',
@@ -17,17 +15,13 @@ export const ROUTES = {
     applications: '/consumer/applications',
 
     planner: '/consumer/planner',
-
   },
 
   developer: {
-
     requestProvider: '/developer/request-provider',
-
   },
 
   provider: {
-
     root: '/provider',
 
     dashboard: '/provider',
@@ -39,11 +33,9 @@ export const ROUTES = {
     manage: (id: string) => `/provider/apis/${id}/manage`,
 
     requests: '/provider/requests',
-
   },
 
   llmAdmin: {
-
     root: '/llm-admin',
 
     dashboard: '/llm-admin',
@@ -55,11 +47,9 @@ export const ROUTES = {
     manage: (id: string) => `/llm-admin/apis/${id}/manage`,
 
     accessRequests: '/llm-admin/access-requests',
-
   },
 
   admin: {
-
     root: '/admin',
 
     dashboard: '/admin',
@@ -77,9 +67,5 @@ export const ROUTES = {
     domains: '/admin/domains',
 
     audit: '/admin/audit',
-
   },
-
 } as const;
-
-

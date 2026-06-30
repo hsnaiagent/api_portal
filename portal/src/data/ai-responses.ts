@@ -8,17 +8,47 @@ export const AI_RESPONSES: Record<AIAgentId, ResponseMap> = {
     default: {
       text: 'Based on your description, I identified APIs that cover salary statistics, org structure, and HR reporting.',
       items: [
-        { id: 'api_hr_salary', label: 'Employee Salary Statistics API', score: 96, reason: 'Direct match for salary statistics reporting' },
-        { id: 'api_hr_org', label: 'Organization Structure API', score: 91, reason: 'Org hierarchy for workforce planning views' },
-        { id: 'api_hr_directory', label: 'Employee Directory API', score: 85, reason: 'Headcount and employee metadata' },
-        { id: 'api_ai_llm', label: 'Enterprise LLM Completion API', score: 72, reason: 'Generate narrative summaries for leadership reports' },
+        {
+          id: 'api_hr_salary',
+          label: 'Employee Salary Statistics API',
+          score: 96,
+          reason: 'Direct match for salary statistics reporting',
+        },
+        {
+          id: 'api_hr_org',
+          label: 'Organization Structure API',
+          score: 91,
+          reason: 'Org hierarchy for workforce planning views',
+        },
+        {
+          id: 'api_hr_directory',
+          label: 'Employee Directory API',
+          score: 85,
+          reason: 'Headcount and employee metadata',
+        },
+        {
+          id: 'api_ai_llm',
+          label: 'Enterprise LLM Completion API',
+          score: 72,
+          reason: 'Generate narrative summaries for leadership reports',
+        },
       ],
     },
     payroll: {
       text: 'Matching payroll and compensation related APIs.',
       items: [
-        { id: 'api_hr_salary', label: 'Employee Salary Statistics API', score: 98, reason: 'Payroll aggregation' },
-        { id: 'api_hr_benefits', label: 'Benefits Enrollment API', score: 80, reason: 'Benefits data alongside compensation' },
+        {
+          id: 'api_hr_salary',
+          label: 'Employee Salary Statistics API',
+          score: 98,
+          reason: 'Payroll aggregation',
+        },
+        {
+          id: 'api_hr_benefits',
+          label: 'Benefits Enrollment API',
+          score: 80,
+          reason: 'Benefits data alongside compensation',
+        },
       ],
     },
   },
@@ -35,8 +65,18 @@ export const AI_RESPONSES: Record<AIAgentId, ResponseMap> = {
   AI_4_Recommendations: {
     default: {
       items: [
-        { id: 'api_hr_benefits', label: 'Benefits Enrollment API', score: 78, reason: 'Often used alongside salary reporting' },
-        { id: 'api_ai_embeddings', label: 'Embedding Service API', score: 65, reason: 'Semantic search within HR documents' },
+        {
+          id: 'api_hr_benefits',
+          label: 'Benefits Enrollment API',
+          score: 78,
+          reason: 'Often used alongside salary reporting',
+        },
+        {
+          id: 'api_ai_embeddings',
+          label: 'Embedding Service API',
+          score: 65,
+          reason: 'Semantic search within HR documents',
+        },
       ],
     },
   },
@@ -65,8 +105,18 @@ export const AI_RESPONSES: Record<AIAgentId, ResponseMap> = {
     default: {
       text: 'Found similar APIs in the catalog. Review before creating a new API.',
       items: [
-        { id: 'api_hr_salary', label: 'Employee Salary Statistics API', score: 88, reason: 'Similar endpoints and data domain' },
-        { id: 'api_hr_benefits', label: 'Benefits Enrollment API', score: 62, reason: 'Partial overlap in compensation domain' },
+        {
+          id: 'api_hr_salary',
+          label: 'Employee Salary Statistics API',
+          score: 88,
+          reason: 'Similar endpoints and data domain',
+        },
+        {
+          id: 'api_hr_benefits',
+          label: 'Benefits Enrollment API',
+          score: 62,
+          reason: 'Partial overlap in compensation domain',
+        },
       ],
     },
   },
@@ -89,7 +139,14 @@ export const AI_RESPONSES: Record<AIAgentId, ResponseMap> = {
   AI_12_AuditAnomalyAlerts: {
     default: {
       text: 'Anomaly detected: Subscription request submitted outside business hours for Confidential API (api_hr_salary). Review recommended.',
-      items: [{ id: 'aud_012', label: 'Off-hours subscription request', score: 85, reason: 'Timestamp 22:14 local time' }],
+      items: [
+        {
+          id: 'aud_012',
+          label: 'Off-hours subscription request',
+          score: 85,
+          reason: 'Timestamp 22:14 local time',
+        },
+      ],
     },
   },
   AI_13_CatalogHealthSummary: {

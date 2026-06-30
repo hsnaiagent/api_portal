@@ -37,8 +37,8 @@ export function CatalogPage() {
     const matches = visible.filter((api) => matchesSearchIndex(api, query));
     const summary =
       matches.length > 0
-        ? getSearchMatchSummary(matches[0], query) ??
-          `Found ${matches.length} API${matches.length === 1 ? '' : 's'} matching "${query}" via indexed search terms.`
+        ? (getSearchMatchSummary(matches[0], query) ??
+          `Found ${matches.length} API${matches.length === 1 ? '' : 's'} matching "${query}" via indexed search terms.`)
         : `No APIs matched "${query}" in name, description, tags, or pre-computed search index.`;
 
     setSearchContext(summary);
@@ -55,7 +55,10 @@ export function CatalogPage() {
   }, [visible, query, domainFilter, classFilter]);
 
   const contextMessage = searchContext ?? aiContext;
-  const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(filtered, 12);
+  const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(
+    filtered,
+    12,
+  );
 
   return (
     <div className="space-y-6">
@@ -72,7 +75,11 @@ export function CatalogPage() {
             className="w-full rounded-lg border border-slate-200 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-brand-blue"
           />
         </div>
-        <button type="button" onClick={runSearch} className="rounded-lg bg-brand-blue text-brand-white px-4 py-2 text-sm font-medium hover:bg-brand-blue-dark flex items-center gap-2 justify-center">
+        <button
+          type="button"
+          onClick={runSearch}
+          className="rounded-lg bg-brand-blue text-brand-white px-4 py-2 text-sm font-medium hover:bg-brand-blue-dark flex items-center gap-2 justify-center"
+        >
           <AIBadge label="Indexed Search" /> Search
         </button>
       </div>
@@ -84,14 +91,28 @@ export function CatalogPage() {
       )}
 
       <div className="flex flex-wrap gap-3">
-        <select value={domainFilter} onChange={(e) => setFilters({ domainFilter: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={domainFilter}
+          onChange={(e) => setFilters({ domainFilter: e.target.value })}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="">All domains</option>
-          {domains.map((d) => <option key={d.domain_id} value={d.domain_id}>{d.name}</option>)}
+          {domains.map((d) => (
+            <option key={d.domain_id} value={d.domain_id}>
+              {d.name}
+            </option>
+          ))}
         </select>
-        <select value={classFilter} onChange={(e) => setFilters({ classFilter: e.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={classFilter}
+          onChange={(e) => setFilters({ classFilter: e.target.value })}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="">All classifications</option>
           {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
-            <option key={c} value={c}>{CLASSIFICATIONS[c].label}</option>
+            <option key={c} value={c}>
+              {CLASSIFICATIONS[c].label}
+            </option>
           ))}
         </select>
       </div>

@@ -31,7 +31,10 @@ export function normalizeData(data) {
     const idField = COLLECTION_ID_FIELDS[key];
     const value = source[key];
     result[key] = Array.isArray(value)
-      ? value.filter((item) => isPlainObject(item) && typeof item[idField] === 'string' && item[idField].length > 0)
+      ? value.filter(
+          (item) =>
+            isPlainObject(item) && typeof item[idField] === 'string' && item[idField].length > 0,
+        )
       : [];
   }
   return result;

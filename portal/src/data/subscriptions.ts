@@ -1,11 +1,7 @@
 import type { Subscription } from '@/types';
 
-
-
 export const initialSubscriptions: Subscription[] = [
-
   {
-
     subscription_id: 'sub_001',
 
     api_id: 'api_hr_directory',
@@ -25,11 +21,9 @@ export const initialSubscriptions: Subscription[] = [
     approved_at: '2026-06-01T10:00:00Z',
 
     created_at: '2026-05-28T09:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_002',
 
     api_id: 'api_hr_salary',
@@ -49,11 +43,9 @@ export const initialSubscriptions: Subscription[] = [
     workflow_instance_id: 'wf_001',
 
     created_at: '2026-06-20T14:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_003',
 
     api_id: 'api_fin_budget',
@@ -73,11 +65,9 @@ export const initialSubscriptions: Subscription[] = [
     workflow_instance_id: 'wf_002',
 
     created_at: '2026-06-22T11:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_004',
 
     api_id: 'api_ai_llm',
@@ -97,11 +87,9 @@ export const initialSubscriptions: Subscription[] = [
     approved_at: '2026-06-10T08:00:00Z',
 
     created_at: '2026-06-08T08:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_005',
 
     api_id: 'api_sales_crm',
@@ -121,11 +109,9 @@ export const initialSubscriptions: Subscription[] = [
     workflow_instance_id: 'wf_003',
 
     created_at: '2026-06-15T16:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_006',
 
     api_id: 'api_ai_rag',
@@ -143,11 +129,9 @@ export const initialSubscriptions: Subscription[] = [
     provider_status: 'pending',
 
     created_at: '2026-06-26T10:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_007',
 
     api_id: 'api_hr_org',
@@ -167,11 +151,9 @@ export const initialSubscriptions: Subscription[] = [
     approved_at: '2026-06-18T09:00:00Z',
 
     created_at: '2026-06-17T14:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_008',
 
     api_id: 'api_fin_rates',
@@ -191,11 +173,9 @@ export const initialSubscriptions: Subscription[] = [
     approved_at: '2026-06-19T11:00:00Z',
 
     created_at: '2026-06-19T10:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_009',
 
     api_id: 'api_hr_benefits',
@@ -215,11 +195,9 @@ export const initialSubscriptions: Subscription[] = [
     workflow_instance_id: 'wf_004',
 
     created_at: '2026-06-24T09:00:00Z',
-
   },
 
   {
-
     subscription_id: 'sub_010',
 
     api_id: 'api_ops_production',
@@ -239,7 +217,5 @@ export const initialSubscriptions: Subscription[] = [
     approved_at: '2026-06-12T08:00:00Z',
 
     created_at: '2026-06-10T08:00:00Z',
-
   },
-
 ];

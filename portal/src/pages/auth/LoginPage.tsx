@@ -79,7 +79,8 @@ export function LoginPage() {
   }
 
   const loginAs = (userId: string, role: PortalRole) => {
-    const user = users.find((u) => u.user_id === userId)!;
+    const user = users.find((u) => u.user_id === userId);
+    if (!user) return;
     dispatch({ type: 'LOGIN', payload: { user, role } });
   };
 
@@ -90,7 +91,8 @@ export function LoginPage() {
         <h1 className="text-4xl font-bold">{BRAND.name}</h1>
         <p className="text-xl mt-4 opacity-90">{BRAND.tagline}</p>
         <p className="mt-8 opacity-80 max-w-md">
-          Discover, govern, and connect enterprise APIs across HR, Finance, Operations, Procurement, Sales, and AI Platform — with intelligent assistance at every step.
+          Discover, govern, and connect enterprise APIs across HR, Finance, Operations, Procurement,
+          Sales, and AI Platform — with intelligent assistance at every step.
         </p>
       </div>
       <div className="flex-1 flex items-center justify-center p-8 bg-slate-50">
@@ -107,7 +109,9 @@ export function LoginPage() {
           >
             Sign in with OAuth2
           </button>
-          <p className="text-center text-xs text-slate-500">Enterprise SSO — signs in as Ahmad (HR publisher) by default</p>
+          <p className="text-center text-xs text-slate-500">
+            Enterprise SSO — signs in as Ahmad (HR publisher) by default
+          </p>
 
           <div className="border-t border-slate-200 pt-6 space-y-3">
             <p className="text-sm font-medium text-slate-700">Developers</p>
@@ -141,30 +145,32 @@ export function LoginPage() {
 
           <div className="border-t border-slate-200 pt-6 space-y-3">
             <p className="text-sm font-medium text-slate-700">Platform admins</p>
-            {platformAdmins.map(({ userId, role, title, description, icon: Icon, accent, iconBg }) => {
-              const user = users.find((u) => u.user_id === userId)!;
-              return (
-                <button
-                  key={userId}
-                  type="button"
-                  onClick={() => loginAs(userId, role)}
-                  className={`w-full text-left rounded-xl border-2 bg-brand-white p-4 transition-colors ${accent}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`rounded-lg p-2 ${iconBg}`}>
-                      <Icon className="h-5 w-5" />
+            {platformAdmins.map(
+              ({ userId, role, title, description, icon: Icon, accent, iconBg }) => {
+                const user = users.find((u) => u.user_id === userId)!;
+                return (
+                  <button
+                    key={userId}
+                    type="button"
+                    onClick={() => loginAs(userId, role)}
+                    className={`w-full text-left rounded-xl border-2 bg-brand-white p-4 transition-colors ${accent}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`rounded-lg p-2 ${iconBg}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-slate-800">{title}</p>
+                        <p className="text-sm text-slate-500 mt-1">{description}</p>
+                        <p className="text-xs text-brand-green mt-2 font-medium">
+                          → Sign in as {user.display_name}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-slate-800">{title}</p>
-                      <p className="text-sm text-slate-500 mt-1">{description}</p>
-                      <p className="text-xs text-brand-green mt-2 font-medium">
-                        → Sign in as {user.display_name}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              },
+            )}
           </div>
         </div>
       </div>

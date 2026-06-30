@@ -10,28 +10,60 @@ import { roleLandingPath } from '@/lib/navigation';
 const named = <T extends object>(p: Promise<T>, key: keyof T) =>
   p.then((m) => ({ default: m[key] as React.ComponentType }));
 
-const ConsumerDashboard = lazy(() => named(import('@/pages/consumer/ConsumerDashboard'), 'ConsumerDashboard'));
+const ConsumerDashboard = lazy(() =>
+  named(import('@/pages/consumer/ConsumerDashboard'), 'ConsumerDashboard'),
+);
 const CatalogPage = lazy(() => named(import('@/pages/consumer/CatalogPage'), 'CatalogPage'));
 const ApiDetailPage = lazy(() => named(import('@/pages/consumer/ApiDetailPage'), 'ApiDetailPage'));
-const SubscriptionsPage = lazy(() => named(import('@/pages/consumer/SubscriptionsPage'), 'SubscriptionsPage'));
-const ApplicationsPage = lazy(() => named(import('@/pages/consumer/ApplicationsPage'), 'ApplicationsPage'));
-const ApplicationPlanner = lazy(() => named(import('@/pages/consumer/ApplicationPlanner'), 'ApplicationPlanner'));
-const ProviderAccessRequestPage = lazy(() => named(import('@/pages/developer/ProviderAccessRequestPage'), 'ProviderAccessRequestPage'));
-const ProviderDashboard = lazy(() => named(import('@/pages/provider/ProviderDashboard'), 'ProviderDashboard'));
+const SubscriptionsPage = lazy(() =>
+  named(import('@/pages/consumer/SubscriptionsPage'), 'SubscriptionsPage'),
+);
+const ApplicationsPage = lazy(() =>
+  named(import('@/pages/consumer/ApplicationsPage'), 'ApplicationsPage'),
+);
+const ApplicationPlanner = lazy(() =>
+  named(import('@/pages/consumer/ApplicationPlanner'), 'ApplicationPlanner'),
+);
+const ProviderAccessRequestPage = lazy(() =>
+  named(import('@/pages/developer/ProviderAccessRequestPage'), 'ProviderAccessRequestPage'),
+);
+const ProviderDashboard = lazy(() =>
+  named(import('@/pages/provider/ProviderDashboard'), 'ProviderDashboard'),
+);
 const MyApisPage = lazy(() => named(import('@/pages/provider/MyApisPage'), 'MyApisPage'));
-const RegisterApiPage = lazy(() => named(import('@/pages/provider/RegisterApiPage'), 'RegisterApiPage'));
+const RegisterApiPage = lazy(() =>
+  named(import('@/pages/provider/RegisterApiPage'), 'RegisterApiPage'),
+);
 const ApiManagePage = lazy(() => named(import('@/pages/provider/ApiManagePage'), 'ApiManagePage'));
-const ConsumerRequestsPage = lazy(() => named(import('@/pages/provider/ConsumerRequestsPage'), 'ConsumerRequestsPage'));
-const LLMAdminDashboard = lazy(() => named(import('@/pages/llm-admin/LLMAdminDashboard'), 'LLMAdminDashboard'));
-const LLMApiManagePage = lazy(() => named(import('@/pages/llm-admin/LLMApiManagePage'), 'LLMApiManagePage'));
-const LLMApiManageDetailPage = lazy(() => named(import('@/pages/llm-admin/LLMApiManageDetailPage'), 'LLMApiManageDetailPage'));
-const RegisterLLMApiPage = lazy(() => named(import('@/pages/llm-admin/RegisterLLMApiPage'), 'RegisterLLMApiPage'));
-const LLMSubscriptionQueuePage = lazy(() => named(import('@/pages/llm-admin/LLMSubscriptionQueuePage'), 'LLMSubscriptionQueuePage'));
+const ConsumerRequestsPage = lazy(() =>
+  named(import('@/pages/provider/ConsumerRequestsPage'), 'ConsumerRequestsPage'),
+);
+const LLMAdminDashboard = lazy(() =>
+  named(import('@/pages/llm-admin/LLMAdminDashboard'), 'LLMAdminDashboard'),
+);
+const LLMApiManagePage = lazy(() =>
+  named(import('@/pages/llm-admin/LLMApiManagePage'), 'LLMApiManagePage'),
+);
+const LLMApiManageDetailPage = lazy(() =>
+  named(import('@/pages/llm-admin/LLMApiManageDetailPage'), 'LLMApiManageDetailPage'),
+);
+const RegisterLLMApiPage = lazy(() =>
+  named(import('@/pages/llm-admin/RegisterLLMApiPage'), 'RegisterLLMApiPage'),
+);
+const LLMSubscriptionQueuePage = lazy(() =>
+  named(import('@/pages/llm-admin/LLMSubscriptionQueuePage'), 'LLMSubscriptionQueuePage'),
+);
 const AdminDashboard = lazy(() => named(import('@/pages/admin/AdminDashboard'), 'AdminDashboard'));
-const ProposalsQueuePage = lazy(() => named(import('@/pages/admin/ProposalsQueuePage'), 'ProposalsQueuePage'));
-const PublishingQueuePage = lazy(() => named(import('@/pages/admin/PublishingQueuePage'), 'PublishingQueuePage'));
+const ProposalsQueuePage = lazy(() =>
+  named(import('@/pages/admin/ProposalsQueuePage'), 'ProposalsQueuePage'),
+);
+const PublishingQueuePage = lazy(() =>
+  named(import('@/pages/admin/PublishingQueuePage'), 'PublishingQueuePage'),
+);
 const AllApisPage = lazy(() => named(import('@/pages/admin/AllApisPage'), 'AllApisPage'));
-const ProviderAccessQueuePage = lazy(() => named(import('@/pages/admin/ProviderAccessQueuePage'), 'ProviderAccessQueuePage'));
+const ProviderAccessQueuePage = lazy(() =>
+  named(import('@/pages/admin/ProviderAccessQueuePage'), 'ProviderAccessQueuePage'),
+);
 const RBACPage = lazy(() => named(import('@/pages/admin/RBACPage'), 'RBACPage'));
 const AuditLogPage = lazy(() => named(import('@/pages/admin/AuditLogPage'), 'AuditLogPage'));
 const DomainsPage = lazy(() => named(import('@/pages/admin/DomainsPage'), 'DomainsPage'));
@@ -71,7 +103,10 @@ export default function App() {
               <Route path={ROUTES.consumer.subscriptions} element={<SubscriptionsPage />} />
               <Route path={ROUTES.consumer.applications} element={<ApplicationsPage />} />
               <Route path={ROUTES.consumer.planner} element={<ApplicationPlanner />} />
-              <Route path={ROUTES.developer.requestProvider} element={<ProviderAccessRequestPage />} />
+              <Route
+                path={ROUTES.developer.requestProvider}
+                element={<ProviderAccessRequestPage />}
+              />
               <Route path={ROUTES.provider.dashboard} element={<ProviderDashboard />} />
               <Route path={ROUTES.provider.myApis} element={<MyApisPage />} />
               <Route path={ROUTES.provider.register} element={<RegisterApiPage />} />

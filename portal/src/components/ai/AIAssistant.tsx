@@ -43,12 +43,20 @@ export function AIAssistant() {
               <AIBadge label="Portal Assistant" />
               <span className="font-semibold text-sm">AI-14</span>
             </div>
-            <button type="button" onClick={() => setOpen(false)} className="p-1 hover:bg-slate-50 rounded">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="p-1 hover:bg-slate-50 rounded"
+              aria-label="Close assistant"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            <p className="text-sm text-slate-600">Ask about APIs, subscriptions, or workflows. Try: &quot;How do I subscribe?&quot; or &quot;Find salary APIs&quot;</p>
+            <p className="text-sm text-slate-600">
+              Ask about APIs, subscriptions, or workflows. Try: &quot;How do I subscribe?&quot; or
+              &quot;Find salary APIs&quot;
+            </p>
             <AIThinkingOverlay loading={loading} text={!loading ? responseText : undefined} />
             {links.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -56,7 +64,10 @@ export function AIAssistant() {
                   <button
                     key={l.path}
                     type="button"
-                    onClick={() => { navigate(l.path); setOpen(false); }}
+                    onClick={() => {
+                      navigate(l.path);
+                      setOpen(false);
+                    }}
                     className="text-xs rounded-full bg-brand-green-light text-brand-green px-3 py-1 hover:bg-brand-green/20"
                   >
                     {l.label}
@@ -73,7 +84,12 @@ export function AIAssistant() {
               placeholder="Ask the portal assistant..."
               className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-blue"
             />
-            <button type="button" onClick={ask} className="rounded-lg bg-brand-green text-brand-white p-2 hover:bg-brand-green-dark">
+            <button
+              type="button"
+              onClick={ask}
+              className="rounded-lg bg-brand-green text-brand-white p-2 hover:bg-brand-green-dark"
+              aria-label="Send message"
+            >
               <Send className="h-4 w-4" />
             </button>
           </div>

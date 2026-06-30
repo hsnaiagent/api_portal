@@ -18,7 +18,9 @@ export function ApplicationPlanner() {
   const [description, setDescription] = useState(state.plannerDescription);
   const [loading, setLoading] = useState(false);
   const [aiText, setAiText] = useState<string>();
-  const [bundle, setBundle] = useState<{ id: string; label: string; score?: number; reason?: string }[]>([]);
+  const [bundle, setBundle] = useState<
+    { id: string; label: string; score?: number; reason?: string }[]
+  >([]);
   const [selected, setSelected] = useState<string[]>(state.plannerSelectedApiIds);
   const [previewApiId, setPreviewApiId] = useState<string | null>(null);
 
@@ -37,7 +39,11 @@ export function ApplicationPlanner() {
       setAiText(res?.text);
       setBundle(res?.items ?? []);
       if (!res?.items?.length) {
-        notify('No matches found', 'The planner could not map your description to catalog APIs. Try adding more detail.', 'warning');
+        notify(
+          'No matches found',
+          'The planner could not map your description to catalog APIs. Try adding more detail.',
+          'warning',
+        );
       }
     } catch {
       notify('Planner failed', 'Could not analyze your description. Please try again.', 'error');
@@ -57,7 +63,11 @@ export function ApplicationPlanner() {
   const requestBundle = () => {
     const app = state.applications.find((a) => a.owner_user_id === state.currentUser?.user_id);
     if (!app) {
-      notify('No application found', 'Create an application before requesting API access.', 'warning');
+      notify(
+        'No application found',
+        'Create an application before requesting API access.',
+        'warning',
+      );
       return;
     }
     selected.forEach((apiId) => {
@@ -75,7 +85,13 @@ export function ApplicationPlanner() {
       };
       dispatch({ type: 'ADD_SUBSCRIPTION', payload: sub });
     });
-    dispatch({ type: 'UPDATE_APPLICATION', payload: { application_id: app.application_id, patch: { application_description: description } } });
+    dispatch({
+      type: 'UPDATE_APPLICATION',
+      payload: {
+        application_id: app.application_id,
+        patch: { application_description: description },
+      },
+    });
     notify('Bundle requested', `${selected.length} subscription requests submitted`, 'success');
   };
 
@@ -88,7 +104,9 @@ export function ApplicationPlanner() {
         <Sparkles className="h-6 w-6 text-brand-blue" />
         <h1 className="text-2xl font-bold">AI Application Planner</h1>
       </div>
-      <p className="text-slate-600">Describe what you want to build. AI maps your description to relevant APIs from the catalog.</p>
+      <p className="text-slate-600">
+        Describe what you want to build. AI maps your description to relevant APIs from the catalog.
+      </p>
 
       <textarea
         value={description}
@@ -97,7 +115,12 @@ export function ApplicationPlanner() {
         placeholder="e.g. An HR leadership dashboard showing monthly salary statistics, headcount trends, and org structure for workforce planning..."
         className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-brand-blue"
       />
-      <button type="button" onClick={analyze} disabled={!description.trim() || loading} className="rounded-lg bg-brand-blue px-6 py-2.5 text-brand-white font-medium hover:bg-brand-blue-dark disabled:opacity-50">
+      <button
+        type="button"
+        onClick={analyze}
+        disabled={!description.trim() || loading}
+        className="rounded-lg bg-brand-blue px-6 py-2.5 text-brand-white font-medium hover:bg-brand-blue-dark disabled:opacity-50"
+      >
         Find APIs for my application
       </button>
 
@@ -127,10 +150,18 @@ export function ApplicationPlanner() {
           </div>
           {selected.length > 0 && (
             <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={requestBundle} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white font-medium">
+              <button
+                type="button"
+                onClick={requestBundle}
+                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white font-medium"
+              >
                 Request access to {selected.length} APIs
               </button>
-              <button type="button" onClick={() => setPreviewApiId(selected[0])} className="rounded-lg border border-slate-200 px-4 py-2 text-sm">
+              <button
+                type="button"
+                onClick={() => setPreviewApiId(selected[0])}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
+              >
                 Preview SDK for first selected
               </button>
             </div>
@@ -141,11 +172,19 @@ export function ApplicationPlanner() {
       {previewApi && app && (
         <div className="rounded-xl border border-slate-200 bg-brand-white p-6">
           <h3 className="font-semibold mb-4">SDK Preview: {previewApi.name}</h3>
-          <SDKPanel api={previewApi} application={{ ...app, application_description: description }} />
+          <SDKPanel
+            api={previewApi}
+            application={{ ...app, application_description: description }}
+          />
         </div>
       )}
 
-      <Link to={ROUTES.consumer.subscriptions} className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline">View subscription status →</Link>
+      <Link
+        to={ROUTES.consumer.subscriptions}
+        className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline"
+      >
+        View subscription status →
+      </Link>
     </div>
   );
 }

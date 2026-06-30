@@ -13,7 +13,9 @@ export function SandboxPanel({
   application?: Application;
   hasActiveSubscription: boolean;
 }) {
-  const [mode, setMode] = useState<'demo' | 'credentials'>(hasActiveSubscription ? 'credentials' : 'demo');
+  const [mode, setMode] = useState<'demo' | 'credentials'>(
+    hasActiveSubscription ? 'credentials' : 'demo',
+  );
   const [endpointIdx, setEndpointIdx] = useState(0);
   const [response, setResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,7 +25,11 @@ export function SandboxPanel({
   const ep = api.endpoints[endpointIdx];
 
   const contextualBody = application?.application_description
-    ? JSON.stringify({ context: 'leadership_dashboard', month: '2026-06', note: 'From application description' }, null, 2)
+    ? JSON.stringify(
+        { context: 'leadership_dashboard', month: '2026-06', note: 'From application description' },
+        null,
+        2,
+      )
     : JSON.stringify({ limit: 10 }, null, 2);
 
   const run = () => {
@@ -31,7 +37,10 @@ export function SandboxPanel({
     setTimeout(() => {
       let example = ep.responseExample ?? { ok: true };
       if (confidential && mode === 'demo') {
-        example = { items: [{ id: '***', department: 'HR', salary_band: 'REDACTED' }], masked: true };
+        example = {
+          items: [{ id: '***', department: 'HR', salary_band: 'REDACTED' }],
+          masked: true,
+        };
       }
       setResponse(JSON.stringify(example, null, 2));
       setLoading(false);
@@ -42,7 +51,9 @@ export function SandboxPanel({
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
         <p className="text-red-800 font-medium">Pre-subscription sandbox unavailable</p>
-        <p className="text-sm text-red-600 mt-2">Restricted APIs require an invitation before any interaction.</p>
+        <p className="text-sm text-red-600 mt-2">
+          Restricted APIs require an invitation before any interaction.
+        </p>
       </div>
     );
   }
@@ -78,7 +89,9 @@ export function SandboxPanel({
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
           >
             {api.endpoints.map((e, i) => (
-              <option key={i} value={i}>{e.method} {e.path}</option>
+              <option key={i} value={i}>
+                {e.method} {e.path}
+              </option>
             ))}
           </select>
           <div>
@@ -97,11 +110,17 @@ export function SandboxPanel({
           >
             <Play className="h-4 w-4" /> {loading ? 'Sending...' : 'Send Request'}
           </button>
-          <p className="text-xs text-slate-400">Auth: {mode === 'demo' ? 'Demo credentials (platform-managed)' : 'OAuth2 bearer token'}</p>
+          <p className="text-xs text-slate-400">
+            Auth: {mode === 'demo' ? 'Demo credentials (platform-managed)' : 'OAuth2 bearer token'}
+          </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-brand-white p-4">
           <p className="text-sm font-medium mb-2">Response</p>
-          {response ? <CodeBlock code={response} language="json" /> : <p className="text-sm text-slate-400">Run a request to see the response</p>}
+          {response ? (
+            <CodeBlock code={response} language="json" />
+          ) : (
+            <p className="text-sm text-slate-400">Run a request to see the response</p>
+          )}
         </div>
       </div>
     </div>

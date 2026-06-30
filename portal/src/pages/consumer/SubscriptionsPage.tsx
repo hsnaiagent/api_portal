@@ -25,7 +25,9 @@ export function SubscriptionsPage() {
   const [domainFilter, setDomainFilter] = useState('');
   const [appFilter, setAppFilter] = useState('');
 
-  const mySubs = state.subscriptions.filter((s) => s.requested_by_user_id === state.currentUser?.user_id);
+  const mySubs = state.subscriptions.filter(
+    (s) => s.requested_by_user_id === state.currentUser?.user_id,
+  );
   const myApps = state.applications.filter((a) => a.owner_user_id === state.currentUser?.user_id);
 
   // Pre-index reference collections so filtering/rendering is O(1) per row.
@@ -39,12 +41,15 @@ export function SubscriptionsPage() {
     [state.credentials],
   );
 
-  const stats = useMemo(() => ({
-    total: mySubs.length,
-    active: mySubs.filter((s) => s.status === 'active').length,
-    pending: mySubs.filter((s) => isPendingSubscription(s.status)).length,
-    rejected: mySubs.filter((s) => isRejectedSubscription(s.status)).length,
-  }), [mySubs]);
+  const stats = useMemo(
+    () => ({
+      total: mySubs.length,
+      active: mySubs.filter((s) => s.status === 'active').length,
+      pending: mySubs.filter((s) => isPendingSubscription(s.status)).length,
+      rejected: mySubs.filter((s) => isRejectedSubscription(s.status)).length,
+    }),
+    [mySubs],
+  );
 
   const filtered = useMemo(() => {
     return mySubs.filter((sub) => {
@@ -59,10 +64,10 @@ export function SubscriptionsPage() {
         const q = query.toLowerCase();
         const app = appById.get(sub.application_id);
         return (
-          api.name.toLowerCase().includes(q)
-          || sub.purpose.toLowerCase().includes(q)
-          || (app?.name.toLowerCase().includes(q) ?? false)
-          || (getDomainName(api.domain_id)?.toLowerCase().includes(q) ?? false)
+          api.name.toLowerCase().includes(q) ||
+          sub.purpose.toLowerCase().includes(q) ||
+          (app?.name.toLowerCase().includes(q) ?? false) ||
+          (getDomainName(api.domain_id)?.toLowerCase().includes(q) ?? false)
         );
       }
 
@@ -82,7 +87,9 @@ export function SubscriptionsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My Subscriptions</h1>
-          <p className="text-sm text-slate-500 mt-1">Track API access, approval status, and credentials</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Track API access, approval status, and credentials
+          </p>
         </div>
         <Link
           to={ROUTES.consumer.catalog}
@@ -129,7 +136,9 @@ export function SubscriptionsPage() {
           >
             <option value="">All domains</option>
             {domains.map((d) => (
-              <option key={d.domain_id} value={d.domain_id}>{d.name}</option>
+              <option key={d.domain_id} value={d.domain_id}>
+                {d.name}
+              </option>
             ))}
           </select>
 
@@ -140,7 +149,9 @@ export function SubscriptionsPage() {
           >
             <option value="">All applications</option>
             {myApps.map((a) => (
-              <option key={a.application_id} value={a.application_id}>{a.name}</option>
+              <option key={a.application_id} value={a.application_id}>
+                {a.name}
+              </option>
             ))}
           </select>
 

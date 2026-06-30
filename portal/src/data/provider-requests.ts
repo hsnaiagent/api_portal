@@ -33,7 +33,8 @@ export const initialProviderAccessRequests: ProviderAccessRequest[] = [
       'I would like to publish sales APIs for our CRM and revenue analytics integrations.',
     status: 'rejected',
     reviewer_id: 'user_portal_admin',
-    reviewer_comment: 'Please provide a detailed data-governance plan before publisher access is granted.',
+    reviewer_comment:
+      'Please provide a detailed data-governance plan before publisher access is granted.',
     created_at: '2026-06-20T14:00:00Z',
     reviewed_at: '2026-06-21T10:00:00Z',
   },

@@ -1,9 +1,6 @@
 import type { SubscriptionStatus } from '@/types';
 
-
-
 export const SUBSCRIPTION_LABELS: Record<SubscriptionStatus, string> = {
-
   pending: 'Pending',
 
   workflow_in_progress: 'Approval in progress',
@@ -19,13 +16,9 @@ export const SUBSCRIPTION_LABELS: Record<SubscriptionStatus, string> = {
   revoked: 'Revoked',
 
   expired: 'Expired',
-
 };
 
-
-
 export const SUBSCRIPTION_COLORS: Record<SubscriptionStatus, string> = {
-
   pending: 'bg-yellow-100 text-yellow-800',
 
   workflow_in_progress: 'bg-yellow-100 text-yellow-800',
@@ -41,5 +34,4 @@ export const SUBSCRIPTION_COLORS: Record<SubscriptionStatus, string> = {
   revoked: 'bg-slate-100 text-slate-500',
 
   expired: 'bg-slate-100 text-slate-600',
-
 };

@@ -29,14 +29,20 @@ const RULE_BASED_AGENTS = new Set<AIAgentId>([
   'AI_15_NaturalLanguageSearch',
 ]);
 
-export async function getAIResponse(agentId: AIAgentId, input: object = {}): Promise<AIResponse | null> {
+export async function getAIResponse(
+  agentId: AIAgentId,
+  input: object = {},
+): Promise<AIResponse | null> {
   if (!AI_CONFIG.enabled || !AI_CONFIG.agents[agentId]) return null;
 
   if (RULE_BASED_AGENTS.has(agentId)) {
     return null;
   }
 
-  if (isGeminiConfigured() && (LIVE_AGENTS.has(agentId) || PRECOMPUTE_AT_REGISTRATION.has(agentId))) {
+  if (
+    isGeminiConfigured() &&
+    (LIVE_AGENTS.has(agentId) || PRECOMPUTE_AT_REGISTRATION.has(agentId))
+  ) {
     const live = await callLiveAgent(agentId, input as Record<string, unknown>);
     if (live) return live;
   }

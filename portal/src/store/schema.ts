@@ -16,7 +16,9 @@ export const COLLECTION_ID_FIELDS = {
   llmSubscriptionRequests: 'llm_request_id',
 } as const;
 
-export const COLLECTION_KEYS = Object.keys(COLLECTION_ID_FIELDS) as (keyof typeof COLLECTION_ID_FIELDS)[];
+export const COLLECTION_KEYS = Object.keys(
+  COLLECTION_ID_FIELDS,
+) as (keyof typeof COLLECTION_ID_FIELDS)[];
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

@@ -34,7 +34,10 @@ export function LLMApiManagePage() {
     <div className="space-y-6">
       <div className="flex justify-between">
         <h1 className="text-2xl font-bold">My LLM APIs</h1>
-        <Link to={ROUTES.llmAdmin.register} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">
+        <Link
+          to={ROUTES.llmAdmin.register}
+          className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm"
+        >
           Register LLM API
         </Link>
       </div>
@@ -50,16 +53,28 @@ export function LLMApiManagePage() {
         }}
         resultLabel={`${filtered.length} of ${llmApis.length} APIs`}
       >
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="">All statuses</option>
           {(Object.keys(LIFECYCLE_LABELS) as LifecycleStatus[]).map((s) => (
-            <option key={s} value={s}>{LIFECYCLE_LABELS[s]}</option>
+            <option key={s} value={s}>
+              {LIFECYCLE_LABELS[s]}
+            </option>
           ))}
         </select>
-        <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="">All classifications</option>
           {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
-            <option key={c} value={c}>{CLASSIFICATIONS[c].label}</option>
+            <option key={c} value={c}>
+              {CLASSIFICATIONS[c].label}
+            </option>
           ))}
         </select>
       </ListFilterBar>
@@ -78,18 +93,31 @@ export function LLMApiManagePage() {
             {filtered.map((api) => (
               <tr key={api.api_id} className="border-t">
                 <td className="px-4 py-3 font-medium">{api.name}</td>
-                <td className="px-4 py-3"><LifecycleBadge status={api.lifecycle_status} /></td>
-                <td className="px-4 py-3"><ClassificationBadge classification={api.classification} /></td>
+                <td className="px-4 py-3">
+                  <LifecycleBadge status={api.lifecycle_status} />
+                </td>
+                <td className="px-4 py-3">
+                  <ClassificationBadge classification={api.classification} />
+                </td>
                 <td className="px-4 py-3">Tier {api.gateway_tier}</td>
                 <td className="px-4 py-3">
-                  <Link to={ROUTES.llmAdmin.manage(api.api_id)} className="text-brand-blue hover:underline">
+                  <Link
+                    to={ROUTES.llmAdmin.manage(api.api_id)}
+                    className="text-brand-blue hover:underline"
+                  >
                     Manage
                   </Link>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">{llmApis.length === 0 ? 'No LLM APIs registered yet.' : 'No APIs match your filters.'}</td></tr>
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  {llmApis.length === 0
+                    ? 'No LLM APIs registered yet.'
+                    : 'No APIs match your filters.'}
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

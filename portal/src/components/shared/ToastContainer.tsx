@@ -35,7 +35,11 @@ export function ToastContainer() {
   if (unread.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2" role="region" aria-label="Notifications">
+    <div
+      className="fixed top-4 right-4 z-50 flex flex-col gap-2"
+      role="region"
+      aria-label="Notifications"
+    >
       {unread.slice(0, MAX_VISIBLE).map((toast) => (
         <div
           key={toast.id}

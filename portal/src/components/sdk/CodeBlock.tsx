@@ -23,7 +23,9 @@ export function CodeBlock({ code, language = 'python' }: { code: string; languag
       </button>
       <Highlight theme={themes.nightOwl} code={code.trim()} language={language}>
         {({ style, tokens, getLineProps, getTokenProps }) => (
-          <pre style={{ ...style, margin: 0, padding: '1rem', fontSize: '0.8rem', overflow: 'auto' }}>
+          <pre
+            style={{ ...style, margin: 0, padding: '1rem', fontSize: '0.8rem', overflow: 'auto' }}
+          >
             {tokens.map((line, i) => (
               <div key={i} {...getLineProps({ line })}>
                 {line.map((token, key) => (

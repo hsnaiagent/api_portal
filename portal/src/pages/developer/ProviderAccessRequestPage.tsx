@@ -17,7 +17,9 @@ export function ProviderAccessRequestPage() {
   const myRequests = state.providerAccessRequests.filter(
     (r) => r.user_id === user.user_id && r.domain_id === domainId,
   );
-  const visibleRequests = myRequests.filter((r) => r.status === 'pending' || r.status === 'rejected');
+  const visibleRequests = myRequests.filter(
+    (r) => r.status === 'pending' || r.status === 'rejected',
+  );
   const alreadyHasAccess = user.provider_domains.includes(domainId);
   const hasPending = visibleRequests.some((r) => r.status === 'pending');
   const isAiDomain = domainId === 'dom_ai';
@@ -46,7 +48,11 @@ export function ProviderAccessRequestPage() {
         payload: { domain_id: domainId },
       },
     });
-    notify('Request submitted', 'Portal Admin will review your publisher access request.', 'success');
+    notify(
+      'Request submitted',
+      'Portal Admin will review your publisher access request.',
+      'success',
+    );
     setJustification('');
   };
 
@@ -63,9 +69,14 @@ export function ProviderAccessRequestPage() {
         <div className="rounded-xl border border-brand-green/30 bg-brand-green-light/40 p-4">
           <p className="text-sm font-medium text-brand-green">Active publisher domains</p>
           <p className="text-sm text-slate-700 mt-1">
-            {user.provider_domains.map((id) => domains.find((d) => d.domain_id === id)?.name ?? id).join(', ')}
+            {user.provider_domains
+              .map((id) => domains.find((d) => d.domain_id === id)?.name ?? id)
+              .join(', ')}
           </p>
-          <Link to={ROUTES.provider.dashboard} className="text-sm text-brand-blue hover:underline mt-2 inline-block">
+          <Link
+            to={ROUTES.provider.dashboard}
+            className="text-sm text-brand-blue hover:underline mt-2 inline-block"
+          >
             Go to Provider Dashboard →
           </Link>
         </div>
@@ -77,12 +88,15 @@ export function ProviderAccessRequestPage() {
           <div className="w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm text-slate-700">
             {domainName}
           </div>
-          <p className="text-xs text-slate-500 mt-1">Assigned from your profile and cannot be changed.</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Assigned from your profile and cannot be changed.
+          </p>
         </div>
 
         {isAiDomain ? (
           <p className="text-sm text-slate-600">
-            AI Platform publisher access is managed separately through the LLM &amp; AI admin workflow.
+            AI Platform publisher access is managed separately through the LLM &amp; AI admin
+            workflow.
           </p>
         ) : alreadyHasAccess ? (
           <p className="text-sm text-brand-green">
@@ -132,7 +146,9 @@ export function ProviderAccessRequestPage() {
             <tbody>
               {visibleRequests.map((r) => (
                 <tr key={r.request_id} className="border-t">
-                  <td className="px-4 py-3">{domains.find((d) => d.domain_id === r.domain_id)?.name}</td>
+                  <td className="px-4 py-3">
+                    {domains.find((d) => d.domain_id === r.domain_id)?.name}
+                  </td>
                   <td className="px-4 py-3 capitalize">{r.status}</td>
                   <td className="px-4 py-3">{new Date(r.created_at).toLocaleDateString()}</td>
                 </tr>

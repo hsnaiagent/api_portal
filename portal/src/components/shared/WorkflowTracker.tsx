@@ -11,19 +11,33 @@ const steps = [
 
 type Outcome = 'active' | 'rejected' | 'expired' | 'in_progress';
 
-function progress(status: SubscriptionStatus, providerStatus: string): { current: number; outcome: Outcome } {
+function progress(
+  status: SubscriptionStatus,
+  providerStatus: string,
+): { current: number; outcome: Outcome } {
   if (status === 'active') return { current: 4, outcome: 'active' };
-  if (status === 'workflow_rejected' || status === 'revoked') return { current: -1, outcome: 'rejected' };
+  if (status === 'workflow_rejected' || status === 'revoked')
+    return { current: -1, outcome: 'rejected' };
   if (status === 'expired') return { current: -1, outcome: 'expired' };
-  if (status === 'provider_pending' || (status === 'workflow_approved' && providerStatus === 'pending')) {
+  if (
+    status === 'provider_pending' ||
+    (status === 'workflow_approved' && providerStatus === 'pending')
+  ) {
     return { current: 3, outcome: 'in_progress' };
   }
   if (status === 'workflow_approved') return { current: 3, outcome: 'in_progress' };
-  if (status === 'workflow_in_progress' || status === 'pending') return { current: 2, outcome: 'in_progress' };
+  if (status === 'workflow_in_progress' || status === 'pending')
+    return { current: 2, outcome: 'in_progress' };
   return { current: 1, outcome: 'in_progress' };
 }
 
-export function WorkflowTracker({ status, providerStatus }: { status: SubscriptionStatus; providerStatus: string }) {
+export function WorkflowTracker({
+  status,
+  providerStatus,
+}: {
+  status: SubscriptionStatus;
+  providerStatus: string;
+}) {
   const { current, outcome } = progress(status, providerStatus);
   const terminalBad = outcome === 'rejected' || outcome === 'expired';
 
@@ -47,15 +61,28 @@ export function WorkflowTracker({ status, providerStatus }: { status: Subscripti
                 ) : (
                   <Circle className="h-5 w-5 text-slate-300" />
                 )}
-                <span className={cn('text-sm', active ? 'font-medium text-slate-800' : 'text-slate-500')}>{step.label}</span>
+                <span
+                  className={cn(
+                    'text-sm',
+                    active ? 'font-medium text-slate-800' : 'text-slate-500',
+                  )}
+                >
+                  {step.label}
+                </span>
               </div>
-              {i < steps.length - 1 && <div className="hidden sm:block flex-1 h-px bg-slate-200 mx-3" />}
+              {i < steps.length - 1 && (
+                <div className="hidden sm:block flex-1 h-px bg-slate-200 mx-3" />
+              )}
             </div>
           );
         })}
       </div>
-      {outcome === 'rejected' && <p className="text-xs font-medium text-red-600">This request was rejected.</p>}
-      {outcome === 'expired' && <p className="text-xs font-medium text-slate-500">This subscription has expired.</p>}
+      {outcome === 'rejected' && (
+        <p className="text-xs font-medium text-red-600">This request was rejected.</p>
+      )}
+      {outcome === 'expired' && (
+        <p className="text-xs font-medium text-slate-500">This subscription has expired.</p>
+      )}
     </div>
   );
 }

@@ -9,7 +9,9 @@
     "dev:full": "concurrently -k -n api,web -c blue,green \"npm run dev:api\" \"npm run dev\"",
     "build": "tsc -b && vite build",
     "start": "node server/index.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"server/**/*.mjs\""
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.6",
@@ -27,14 +29,21 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
+    "eslint": "^10.6.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.4",
     "tailwindcss": "^4.0.0",
     "typescript": "~5.6.2",
+    "typescript-eslint": "^8.62.1",
     "vite": "^6.0.3"
   }
 }

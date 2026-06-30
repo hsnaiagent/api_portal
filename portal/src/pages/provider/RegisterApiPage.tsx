@@ -11,7 +11,11 @@ import { CLASSIFICATIONS } from '@/config/classification';
 import { ROUTES } from '@/config/routes';
 import type { API, Classification, OpenAPIEndpoint } from '@/types';
 
-export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixedDomainId?: string; successRoute?: string; llmMode?: boolean } = {}) {
+export function RegisterApiPage({
+  fixedDomainId,
+  successRoute,
+  llmMode,
+}: { fixedDomainId?: string; successRoute?: string; llmMode?: boolean } = {}) {
   const { state, dispatch } = usePortal();
   const navigate = useNavigate();
   const notify = useNotify();
@@ -29,7 +33,9 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
   const [submitting, setSubmitting] = useState(false);
   const [aiText, setAiText] = useState<string>();
   const [checklist, setChecklist] = useState<{ item: string; passed: boolean }[]>([]);
-  const [duplicates, setDuplicates] = useState<{ id: string; label: string; score?: number; reason?: string }[]>([]);
+  const [duplicates, setDuplicates] = useState<
+    { id: string; label: string; score?: number; reason?: string }[]
+  >([]);
   const [confirmedDup, setConfirmedDup] = useState(false);
 
   const specInfo = describeSpec(spec);
@@ -54,7 +60,11 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
       const res = await runAI('AI_6_DescriptionGenerator');
       setDescription(res?.text ?? description);
     } catch {
-      notify('AI unavailable', 'Could not generate a description. Please write one manually.', 'warning');
+      notify(
+        'AI unavailable',
+        'Could not generate a description. Please write one manually.',
+        'warning',
+      );
     } finally {
       setLoading(false);
     }
@@ -78,7 +88,11 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
       setAiText(c?.text);
       setStep(3);
     } catch {
-      notify('Analysis failed', 'Could not analyze the spec. You can continue and set fields manually.', 'warning');
+      notify(
+        'Analysis failed',
+        'Could not analyze the spec. You can continue and set fields manually.',
+        'warning',
+      );
       setStep(3);
     } finally {
       setLoading(false);
@@ -91,7 +105,9 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
       return { endpoints: parsed.endpoints, version: parsed.version ?? '1.0.0' };
     }
     return {
-      endpoints: [{ method: 'GET', path: `/v1/${slug}`, summary: name, responseExample: { ok: true } }],
+      endpoints: [
+        { method: 'GET', path: `/v1/${slug}`, summary: name, responseExample: { ok: true } },
+      ],
       version: parsed?.version ?? '1.0.0',
     };
   };
@@ -110,7 +126,8 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
       const { endpoints, version } = buildEndpoints(slug);
       const api: API = {
         api_id: `api_new_${Date.now()}`,
-        domain_id: fixedDomainId ?? state.currentUser.provider_domains[0] ?? state.currentUser.domain_id,
+        domain_id:
+          fixedDomainId ?? state.currentUser.provider_domains[0] ?? state.currentUser.domain_id,
         name,
         slug,
         description,
@@ -150,11 +167,18 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
         const existingApiIds = [...state.apis.map((item) => item.api_id), api.api_id];
         const searchIndex = await generateSearchIndex(name, description, existingApiIds);
         if (searchIndex) {
-          dispatch({ type: 'UPDATE_API', payload: { api_id: api.api_id, patch: { search_index: searchIndex } } });
+          dispatch({
+            type: 'UPDATE_API',
+            payload: { api_id: api.api_id, patch: { search_index: searchIndex } },
+          });
         }
       })();
 
-      notify('API proposed', `${name} was submitted for admin review with ${endpoints.length} endpoint${endpoints.length === 1 ? '' : 's'}.`, 'success');
+      notify(
+        'API proposed',
+        `${name} was submitted for admin review with ${endpoints.length} endpoint${endpoints.length === 1 ? '' : 's'}.`,
+        'success',
+      );
       navigate(successRoute ?? ROUTES.provider.myApis);
     } catch {
       notify('Submission failed', 'Could not submit the API proposal. Please try again.', 'error');
@@ -168,33 +192,98 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Register API</h1>
-      <div className="flex gap-2 text-sm">{[1, 2, 3, 4].map((s) => <span key={s} className={`px-3 py-1 rounded-full ${step === s ? 'bg-brand-green text-brand-white' : 'bg-slate-100'}`}>Step {s}</span>)}</div>
+      <div className="flex gap-2 text-sm">
+        {[1, 2, 3, 4].map((s) => (
+          <span
+            key={s}
+            className={`px-3 py-1 rounded-full ${step === s ? 'bg-brand-green text-brand-white' : 'bg-slate-100'}`}
+          >
+            Step {s}
+          </span>
+        ))}
+      </div>
 
       {step === 1 && (
         <div className="space-y-4 rounded-xl border bg-brand-white p-6">
           <div>
-            <label htmlFor="api-name" className="block text-sm font-medium mb-1">API name <span className="text-red-500">*</span></label>
-            <input id="api-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="API name" className="w-full rounded-lg border px-3 py-2 text-sm" />
+            <label htmlFor="api-name" className="block text-sm font-medium mb-1">
+              API name <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="api-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="API name"
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+            />
           </div>
           <div>
-            <label htmlFor="api-description" className="block text-sm font-medium mb-1">Description</label>
-            <textarea id="api-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" rows={4} className="w-full rounded-lg border px-3 py-2 text-sm" />
+            <label htmlFor="api-description" className="block text-sm font-medium mb-1">
+              Description
+            </label>
+            <textarea
+              id="api-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description"
+              rows={4}
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+            />
           </div>
-          <button type="button" onClick={generateDescription} disabled={busy} className="text-sm text-brand-blue flex items-center gap-1 disabled:opacity-50"><AIBadge label="AI-6" /> {loading ? 'Generating…' : 'Generate description with AI'}</button>
-          <button type="button" onClick={() => setStep(2)} disabled={!name.trim()} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50">Next</button>
+          <button
+            type="button"
+            onClick={generateDescription}
+            disabled={busy}
+            className="text-sm text-brand-blue flex items-center gap-1 disabled:opacity-50"
+          >
+            <AIBadge label="AI-6" /> {loading ? 'Generating…' : 'Generate description with AI'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setStep(2)}
+            disabled={!name.trim()}
+            className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-4 rounded-xl border bg-brand-white p-6">
-          <label htmlFor="api-spec" className="block text-sm font-medium">OpenAPI spec</label>
-          <textarea id="api-spec" value={spec} onChange={(e) => setSpec(e.target.value)} placeholder="Paste OpenAPI spec (JSON)..." rows={8} className="w-full rounded-lg border px-3 py-2 text-sm font-mono" />
+          <label htmlFor="api-spec" className="block text-sm font-medium">
+            OpenAPI spec
+          </label>
+          <textarea
+            id="api-spec"
+            value={spec}
+            onChange={(e) => setSpec(e.target.value)}
+            placeholder="Paste OpenAPI spec (JSON)..."
+            rows={8}
+            className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
+          />
           {spec.trim() && <p className="text-xs text-slate-500">{specInfo.note}</p>}
-          <p className="text-xs text-slate-500">AI-7 Tag Suggester, AI-8 Classification Advisor, AI-10 Spec Quality run on continue</p>
+          <p className="text-xs text-slate-500">
+            AI-7 Tag Suggester, AI-8 Classification Advisor, AI-10 Spec Quality run on continue
+          </p>
           <AIThinkingOverlay loading={loading} />
           <div className="flex gap-2">
-            <button type="button" onClick={() => setStep(1)} disabled={busy} className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Back</button>
-            <button type="button" onClick={onSpecUpload} disabled={busy || !spec.trim()} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50">{loading ? 'Analyzing…' : 'Analyze & Continue'}</button>
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              disabled={busy}
+              className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={onSpecUpload}
+              disabled={busy || !spec.trim()}
+              className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+            >
+              {loading ? 'Analyzing…' : 'Analyze & Continue'}
+            </button>
           </div>
         </div>
       )}
@@ -203,16 +292,49 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
         <div className="space-y-4 rounded-xl border bg-brand-white p-6">
           <AIThinkingOverlay loading={loading} text={!loading ? aiText : undefined} />
           {checklist.length > 0 && (
-            <ul className="text-sm space-y-1">{checklist.map((c, i) => <li key={i} className={c.passed ? 'text-brand-green' : 'text-red-600'}>{c.passed ? '✓' : '✗'} {c.item}</li>)}</ul>
+            <ul className="text-sm space-y-1">
+              {checklist.map((c, i) => (
+                <li key={i} className={c.passed ? 'text-brand-green' : 'text-red-600'}>
+                  {c.passed ? '✓' : '✗'} {c.item}
+                </li>
+              ))}
+            </ul>
           )}
-          <div className="flex flex-wrap gap-2">{tags.map((t) => <span key={t} className="rounded-full bg-brand-blue-light text-brand-blue-dark px-2 py-0.5 text-xs">{t}</span>)}</div>
-          <label htmlFor="api-class" className="text-sm font-medium">Classification <AIBadge label="AI-8" /></label>
-          <select id="api-class" value={classification} onChange={(e) => setClassification(e.target.value as Classification)} className="w-full rounded-lg border px-3 py-2 text-sm">
-            {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => <option key={c} value={c}>{CLASSIFICATIONS[c].label}</option>)}
+          <div className="flex flex-wrap gap-2">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="rounded-full bg-brand-blue-light text-brand-blue-dark px-2 py-0.5 text-xs"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+          <label htmlFor="api-class" className="text-sm font-medium">
+            Classification <AIBadge label="AI-8" />
+          </label>
+          <select
+            id="api-class"
+            value={classification}
+            onChange={(e) => setClassification(e.target.value as Classification)}
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          >
+            {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
+              <option key={c} value={c}>
+                {CLASSIFICATIONS[c].label}
+              </option>
+            ))}
           </select>
           <p className="text-xs text-slate-500">{CLASSIFICATIONS[classification].handling}</p>
-          <label htmlFor="api-tier" className="text-sm font-medium">Gateway tier</label>
-          <select id="api-tier" value={tier} onChange={(e) => setTier(Number(e.target.value) as 1 | 2 | 3)} className="w-full rounded-lg border px-3 py-2 text-sm">
+          <label htmlFor="api-tier" className="text-sm font-medium">
+            Gateway tier
+          </label>
+          <select
+            id="api-tier"
+            value={tier}
+            onChange={(e) => setTier(Number(e.target.value) as 1 | 2 | 3)}
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          >
             <option value={1}>Tier 1 — Metadata only</option>
             <option value={2}>Tier 2 — Gateway proxied</option>
             <option value={3}>Tier 3 — Gateway native</option>
@@ -221,32 +343,94 @@ export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixe
             <div className="rounded-lg border border-brand-blue/30 bg-brand-blue-light/40 p-4 space-y-3">
               <p className="text-sm font-medium text-brand-blue-dark">LLM configuration</p>
               <div>
-                <label htmlFor="llm-model" className="block text-sm font-medium mb-1">Model</label>
-                <input id="llm-model" value={llmModel} onChange={(e) => setLlmModel(e.target.value)} placeholder="e.g. gpt-4o, claude-3.5, internal-rag-v2" className="w-full rounded-lg border px-3 py-2 text-sm" />
+                <label htmlFor="llm-model" className="block text-sm font-medium mb-1">
+                  Model
+                </label>
+                <input
+                  id="llm-model"
+                  value={llmModel}
+                  onChange={(e) => setLlmModel(e.target.value)}
+                  placeholder="e.g. gpt-4o, claude-3.5, internal-rag-v2"
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                />
               </div>
               <div>
-                <label htmlFor="llm-rate" className="block text-sm font-medium mb-1">Rate limit (requests/min)</label>
-                <input id="llm-rate" type="number" min={0} value={llmRateLimit} onChange={(e) => setLlmRateLimit(e.target.value)} placeholder="e.g. 60" className="w-full rounded-lg border px-3 py-2 text-sm" />
+                <label htmlFor="llm-rate" className="block text-sm font-medium mb-1">
+                  Rate limit (requests/min)
+                </label>
+                <input
+                  id="llm-rate"
+                  type="number"
+                  min={0}
+                  value={llmRateLimit}
+                  onChange={(e) => setLlmRateLimit(e.target.value)}
+                  placeholder="e.g. 60"
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                />
               </div>
               <div>
-                <label htmlFor="llm-budget" className="block text-sm font-medium mb-1">Monthly token budget</label>
-                <input id="llm-budget" type="number" min={0} value={llmTokenBudget} onChange={(e) => setLlmTokenBudget(e.target.value)} placeholder="e.g. 5000000" className="w-full rounded-lg border px-3 py-2 text-sm" />
+                <label htmlFor="llm-budget" className="block text-sm font-medium mb-1">
+                  Monthly token budget
+                </label>
+                <input
+                  id="llm-budget"
+                  type="number"
+                  min={0}
+                  value={llmTokenBudget}
+                  onChange={(e) => setLlmTokenBudget(e.target.value)}
+                  placeholder="e.g. 5000000"
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                />
               </div>
             </div>
           )}
           <div className="flex gap-2">
-            <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Back</button>
-            <button type="button" onClick={submit} disabled={busy} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50">{submitting ? 'Submitting…' : 'Submit proposal'}</button>
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              disabled={busy}
+              className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={busy}
+              className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+            >
+              {submitting ? 'Submitting…' : 'Submit proposal'}
+            </button>
           </div>
         </div>
       )}
 
       {step === 4 && (
         <div className="space-y-4 rounded-xl border border-orange-200 bg-orange-50 p-6">
-          <h3 className="font-semibold flex items-center gap-2"><AIBadge label="AI-9" /> Similar APIs found</h3>
-          {duplicates.map((d) => <p key={d.id} className="text-sm">{d.label} ({d.score}% — {d.reason})</p>)}
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={confirmedDup} onChange={(e) => setConfirmedDup(e.target.checked)} /> I reviewed similar APIs and confirm a new API is needed</label>
-          <button type="button" onClick={submit} disabled={!confirmedDup || submitting} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50">{submitting ? 'Submitting…' : 'Confirm & Submit'}</button>
+          <h3 className="font-semibold flex items-center gap-2">
+            <AIBadge label="AI-9" /> Similar APIs found
+          </h3>
+          {duplicates.map((d) => (
+            <p key={d.id} className="text-sm">
+              {d.label} ({d.score}% — {d.reason})
+            </p>
+          ))}
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={confirmedDup}
+              onChange={(e) => setConfirmedDup(e.target.checked)}
+            />{' '}
+            I reviewed similar APIs and confirm a new API is needed
+          </label>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!confirmedDup || submitting}
+            className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+          >
+            {submitting ? 'Submitting…' : 'Confirm & Submit'}
+          </button>
         </div>
       )}
     </div>

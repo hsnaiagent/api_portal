@@ -34,7 +34,15 @@ function genericSnippet(api: API, lang: SDKLanguage, clientId: string) {
   }
 }
 
-export function SDKPanel({ api, application, credentialClientId }: { api: API; application?: Application; credentialClientId?: string }) {
+export function SDKPanel({
+  api,
+  application,
+  credentialClientId,
+}: {
+  api: API;
+  application?: Application;
+  credentialClientId?: string;
+}) {
   const [lang, setLang] = useState<SDKLanguage>('python');
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState('');
@@ -49,13 +57,16 @@ export function SDKPanel({ api, application, credentialClientId }: { api: API; a
           api_id: api.api_id,
           language: lang,
         });
-        if (!cancelled) setCode(res?.code ?? genericSnippet(api, lang, credentialClientId ?? 'YOUR_CLIENT_ID'));
+        if (!cancelled)
+          setCode(res?.code ?? genericSnippet(api, lang, credentialClientId ?? 'YOUR_CLIENT_ID'));
       } else {
         setCode(genericSnippet(api, lang, credentialClientId ?? 'YOUR_CLIENT_ID'));
       }
       setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [api, application, lang, credentialClientId]);
 
   const prismLang = languages.find((l) => l.id === lang)?.prism ?? 'text';
@@ -81,10 +92,21 @@ export function SDKPanel({ api, application, credentialClientId }: { api: API; a
         </div>
       </div>
       {application?.application_description && (
-        <p className="text-xs text-slate-500">Using application context: &quot;{application.application_description.slice(0, 80)}...&quot;</p>
+        <p className="text-xs text-slate-500">
+          Using application context: &quot;{application.application_description.slice(0, 80)}
+          ...&quot;
+        </p>
       )}
       <AIThinkingOverlay loading={loading} />
-      {!loading && code && <CodeBlock code={code.replace('YOUR_TOKEN', credentialClientId ? `${credentialClientId}_secret` : 'YOUR_TOKEN')} language={prismLang} />}
+      {!loading && code && (
+        <CodeBlock
+          code={code.replace(
+            'YOUR_TOKEN',
+            credentialClientId ? `${credentialClientId}_secret` : 'YOUR_TOKEN',
+          )}
+          language={prismLang}
+        />
+      )}
       <button
         type="button"
         onClick={() => {

@@ -1,11 +1,7 @@
 import type { User } from '@/types';
 
-
-
 export const users: User[] = [
-
   {
-
     user_id: 'user_developer',
 
     email: 'ahmad.alrashidi@example.com',
@@ -19,11 +15,9 @@ export const users: User[] = [
     domain_id: 'dom_hr',
 
     provider_domains: ['dom_hr'],
-
   },
 
   {
-
     user_id: 'user_murad',
 
     email: 'murad.alqahtani@example.com',
@@ -37,11 +31,9 @@ export const users: User[] = [
     domain_id: 'dom_finance',
 
     provider_domains: ['dom_finance'],
-
   },
 
   {
-
     user_id: 'user_ali',
 
     email: 'ali.alfarsi@example.com',
@@ -55,11 +47,9 @@ export const users: User[] = [
     domain_id: 'dom_sales',
 
     provider_domains: [],
-
   },
 
   {
-
     user_id: 'user_llm_admin',
 
     email: 'saleh.hassan@example.com',
@@ -73,11 +63,9 @@ export const users: User[] = [
     domain_id: 'dom_ai',
 
     provider_domains: [],
-
   },
 
   {
-
     user_id: 'user_portal_admin',
 
     email: 'admin.platform@example.com',
@@ -91,17 +79,11 @@ export const users: User[] = [
     domain_id: 'dom_ai',
 
     provider_domains: [],
-
   },
-
 ];
-
-
 
 export const initialUsers = users;
 
 export function getUserById(id: string) {
-
   return users.find((u) => u.user_id === id);
-
 }

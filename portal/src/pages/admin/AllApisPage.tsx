@@ -33,12 +33,23 @@ export function AllApisPage() {
   }, [state.apis, query, domainFilter, statusFilter, classFilter]);
 
   const hasActiveFilters = Boolean(query || domainFilter || statusFilter || classFilter);
-  const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(filtered, 12);
+  const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(
+    filtered,
+    12,
+  );
 
   const emergencyRetire = (api: API) => {
     if (!state.currentUser) return;
-    if (!window.confirm(`Emergency-retire "${api.name}"? This immediately blocks all access and cannot be undone.`)) return;
-    dispatch({ type: 'UPDATE_API', payload: { api_id: api.api_id, patch: { lifecycle_status: 'emergency_retired' } } });
+    if (
+      !window.confirm(
+        `Emergency-retire "${api.name}"? This immediately blocks all access and cannot be undone.`,
+      )
+    )
+      return;
+    dispatch({
+      type: 'UPDATE_API',
+      payload: { api_id: api.api_id, patch: { lifecycle_status: 'emergency_retired' } },
+    });
     dispatch({
       type: 'ADD_AUDIT',
       payload: {
@@ -71,41 +82,84 @@ export function AllApisPage() {
         }}
         resultLabel={`${filtered.length} of ${state.apis.length} APIs`}
       >
-        <select value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={domainFilter}
+          onChange={(e) => setDomainFilter(e.target.value)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="">All domains</option>
-          {domains.map((d) => <option key={d.domain_id} value={d.domain_id}>{d.name}</option>)}
-        </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
-          <option value="">All statuses</option>
-          {(Object.keys(LIFECYCLE_LABELS) as LifecycleStatus[]).map((s) => (
-            <option key={s} value={s}>{LIFECYCLE_LABELS[s]}</option>
+          {domains.map((d) => (
+            <option key={d.domain_id} value={d.domain_id}>
+              {d.name}
+            </option>
           ))}
         </select>
-        <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
+          <option value="">All statuses</option>
+          {(Object.keys(LIFECYCLE_LABELS) as LifecycleStatus[]).map((s) => (
+            <option key={s} value={s}>
+              {LIFECYCLE_LABELS[s]}
+            </option>
+          ))}
+        </select>
+        <select
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="">All classifications</option>
           {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
-            <option key={c} value={c}>{CLASSIFICATIONS[c].label}</option>
+            <option key={c} value={c}>
+              {CLASSIFICATIONS[c].label}
+            </option>
           ))}
         </select>
       </ListFilterBar>
       <div className="overflow-x-auto rounded-xl border bg-brand-white">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50"><tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Class</th><th className="px-4 py-3">Actions</th></tr></thead>
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="px-4 py-3 text-left">Name</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Class</th>
+              <th className="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
           <tbody>
             {pageItems.map((api) => (
               <tr key={api.api_id} className="border-t">
                 <td className="px-4 py-3 font-medium">{api.name}</td>
-                <td className="px-4 py-3"><LifecycleBadge status={api.lifecycle_status} /></td>
-                <td className="px-4 py-3"><ClassificationBadge classification={api.classification} /></td>
+                <td className="px-4 py-3">
+                  <LifecycleBadge status={api.lifecycle_status} />
+                </td>
+                <td className="px-4 py-3">
+                  <ClassificationBadge classification={api.classification} />
+                </td>
                 <td className="px-4 py-3">
                   {api.lifecycle_status !== 'emergency_retired' && (
-                    <button type="button" onClick={() => emergencyRetire(api)} className="text-xs text-red-600 hover:underline">Emergency retire</button>
+                    <button
+                      type="button"
+                      onClick={() => emergencyRetire(api)}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Emergency retire
+                    </button>
                   )}
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">{state.apis.length === 0 ? 'No APIs in the catalog yet.' : 'No APIs match your filters.'}</td></tr>
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                  {state.apis.length === 0
+                    ? 'No APIs in the catalog yet.'
+                    : 'No APIs match your filters.'}
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

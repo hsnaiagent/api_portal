@@ -29,10 +29,10 @@ export function RBACPage() {
         const q = query.toLowerCase();
         const domainNames = u.provider_domains.map(domainName).join(' ').toLowerCase();
         return (
-          u.display_name.toLowerCase().includes(q)
-          || u.email.toLowerCase().includes(q)
-          || roleLabels[primaryRole].toLowerCase().includes(q)
-          || domainNames.includes(q)
+          u.display_name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          roleLabels[primaryRole].toLowerCase().includes(q) ||
+          domainNames.includes(q)
         );
       }
       return true;
@@ -80,7 +80,9 @@ export function RBACPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">RBAC Management</h1>
-      <p className="text-sm text-slate-500">Assign portal roles and publisher domains. Changes are saved and audited.</p>
+      <p className="text-sm text-slate-500">
+        Assign portal roles and publisher domains. Changes are saved and audited.
+      </p>
       <ListFilterBar
         query={query}
         onQueryChange={setQuery}
@@ -92,10 +94,16 @@ export function RBACPage() {
         }}
         resultLabel={`${filtered.length} of ${state.users.length} users`}
       >
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="">All roles</option>
           {(Object.keys(roleLabels) as PortalRole[]).map((role) => (
-            <option key={role} value={role}>{roleLabels[role]}</option>
+            <option key={role} value={role}>
+              {roleLabels[role]}
+            </option>
           ))}
         </select>
       </ListFilterBar>
@@ -120,12 +128,22 @@ export function RBACPage() {
                   {u.provider_domains.length ? u.provider_domains.map(domainName).join(', ') : '—'}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button type="button" onClick={() => startEdit(u)} className="text-brand-blue hover:text-brand-blue-dark hover:underline">Edit</button>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(u)}
+                    className="text-brand-blue hover:text-brand-blue-dark hover:underline"
+                  >
+                    Edit
+                  </button>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">{state.users.length === 0 ? 'No users yet.' : 'No users match your filters.'}</td></tr>
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  {state.users.length === 0 ? 'No users yet.' : 'No users match your filters.'}
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -133,13 +151,26 @@ export function RBACPage() {
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-brand-white p-6 space-y-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-md rounded-xl bg-brand-white p-6 space-y-4"
+          >
             <h2 className="font-bold">Edit {editing.display_name}</h2>
             <div>
-              <label htmlFor="rbac-role" className="block text-sm font-medium mb-1">Portal role</label>
-              <select id="rbac-role" value={draftRole} onChange={(e) => setDraftRole(e.target.value as PortalRole)} className="w-full rounded-lg border px-3 py-2 text-sm">
+              <label htmlFor="rbac-role" className="block text-sm font-medium mb-1">
+                Portal role
+              </label>
+              <select
+                id="rbac-role"
+                value={draftRole}
+                onChange={(e) => setDraftRole(e.target.value as PortalRole)}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              >
                 {(Object.keys(roleLabels) as PortalRole[]).map((role) => (
-                  <option key={role} value={role}>{roleLabels[role]}</option>
+                  <option key={role} value={role}>
+                    {roleLabels[role]}
+                  </option>
                 ))}
               </select>
             </div>
@@ -149,7 +180,11 @@ export function RBACPage() {
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {state.domains.map((d) => (
                     <label key={d.domain_id} className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={draftDomains.includes(d.domain_id)} onChange={() => toggleDomain(d.domain_id)} />
+                      <input
+                        type="checkbox"
+                        checked={draftDomains.includes(d.domain_id)}
+                        onChange={() => toggleDomain(d.domain_id)}
+                      />
                       {d.name}
                     </label>
                   ))}
@@ -157,8 +192,16 @@ export function RBACPage() {
               </div>
             )}
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setEditing(null)} className="px-4 py-2 text-sm">Cancel</button>
-              <button type="button" onClick={save} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Save</button>
+              <button type="button" onClick={() => setEditing(null)} className="px-4 py-2 text-sm">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={save}
+                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm"
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>

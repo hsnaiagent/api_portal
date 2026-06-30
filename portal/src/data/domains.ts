@@ -1,12 +1,37 @@
 import type { Domain, Team } from '@/types';
 
 export const domains: Domain[] = [
-  { domain_id: 'dom_hr', name: 'Human Resources', code: 'hr', description: 'Employee and organizational data' },
-  { domain_id: 'dom_finance', name: 'Finance', code: 'finance', description: 'Financial reporting and ledger' },
-  { domain_id: 'dom_ops', name: 'Operations', code: 'operations', description: 'Production and logistics' },
-  { domain_id: 'dom_proc', name: 'Procurement', code: 'procurement', description: 'Vendors and contracts' },
+  {
+    domain_id: 'dom_hr',
+    name: 'Human Resources',
+    code: 'hr',
+    description: 'Employee and organizational data',
+  },
+  {
+    domain_id: 'dom_finance',
+    name: 'Finance',
+    code: 'finance',
+    description: 'Financial reporting and ledger',
+  },
+  {
+    domain_id: 'dom_ops',
+    name: 'Operations',
+    code: 'operations',
+    description: 'Production and logistics',
+  },
+  {
+    domain_id: 'dom_proc',
+    name: 'Procurement',
+    code: 'procurement',
+    description: 'Vendors and contracts',
+  },
   { domain_id: 'dom_sales', name: 'Sales', code: 'sales', description: 'CRM and revenue' },
-  { domain_id: 'dom_ai', name: 'AI Platform', code: 'ai', description: 'LLM, RAG, and MCP services' },
+  {
+    domain_id: 'dom_ai',
+    name: 'AI Platform',
+    code: 'ai',
+    description: 'LLM, RAG, and MCP services',
+  },
 ];
 
 export const initialDomains = domains;

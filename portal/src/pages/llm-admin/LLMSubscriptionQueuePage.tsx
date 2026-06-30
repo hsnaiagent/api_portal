@@ -14,7 +14,9 @@ export function LLMSubscriptionQueuePage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [comment, setComment] = useState<Record<string, string>>({});
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
+    'all',
+  );
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   const audit = (action: string, llmRequestId: string) => {
@@ -36,7 +38,10 @@ export function LLMSubscriptionQueuePage() {
   const pending = state.llmSubscriptionRequests.filter((r) => r.status === 'pending');
   const reviewed = state.llmSubscriptionRequests.filter((r) => r.status !== 'pending');
 
-  const matchesFilters = (req: typeof state.llmSubscriptionRequests[number], isPending: boolean) => {
+  const matchesFilters = (
+    req: (typeof state.llmSubscriptionRequests)[number],
+    isPending: boolean,
+  ) => {
     if (statusFilter === 'pending' && !isPending) return false;
     if (statusFilter === 'approved' && req.status !== 'approved') return false;
     if (statusFilter === 'rejected' && req.status !== 'rejected') return false;
@@ -45,9 +50,9 @@ export function LLMSubscriptionQueuePage() {
       const user = getUserById(req.requested_by_user_id);
       const api = getApiById(req.api_id);
       return (
-        req.use_case_name.toLowerCase().includes(q)
-        || user?.display_name.toLowerCase().includes(q)
-        || api?.name.toLowerCase().includes(q)
+        req.use_case_name.toLowerCase().includes(q) ||
+        user?.display_name.toLowerCase().includes(q) ||
+        api?.name.toLowerCase().includes(q)
       );
     }
     return true;
@@ -87,12 +92,20 @@ export function LLMSubscriptionQueuePage() {
           type: 'UPDATE_SUBSCRIPTION',
           payload: {
             subscription_id: subscriptionId,
-            patch: { status: 'active', provider_status: 'accepted', approved_at: new Date().toISOString() },
+            patch: {
+              status: 'active',
+              provider_status: 'accepted',
+              approved_at: new Date().toISOString(),
+            },
           },
         });
       }
       audit('llm_access.approved', llmRequestId);
-      notify('LLM access approved', 'Subscription activated and credentials provisioned.', 'success');
+      notify(
+        'LLM access approved',
+        'Subscription activated and credentials provisioned.',
+        'success',
+      );
     } catch {
       notify('Approval failed', 'Could not provision the subscription. Please try again.', 'error');
     } finally {
@@ -117,7 +130,10 @@ export function LLMSubscriptionQueuePage() {
     });
     dispatch({
       type: 'UPDATE_SUBSCRIPTION',
-      payload: { subscription_id: subscriptionId, patch: { status: 'revoked', provider_status: 'rejected' } },
+      payload: {
+        subscription_id: subscriptionId,
+        patch: { status: 'revoked', provider_status: 'rejected' },
+      },
     });
     audit('llm_access.rejected', llmRequestId);
     notify('LLM access rejected', 'Developer has been notified.', 'warning');
@@ -143,7 +159,11 @@ export function LLMSubscriptionQueuePage() {
         }}
         resultLabel={`${filteredPending.length} pending · ${filteredReviewed.length} reviewed`}
       >
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="all">All statuses</option>
           <option value="pending">Pending only</option>
           <option value="approved">Approved</option>
@@ -156,7 +176,9 @@ export function LLMSubscriptionQueuePage() {
           <h2 className="font-semibold text-sm">Pending ({filteredPending.length})</h2>
         </div>
         {filteredPending.length === 0 ? (
-          <p className="p-6 text-sm text-slate-500">No pending LLM access requests match your filters.</p>
+          <p className="p-6 text-sm text-slate-500">
+            No pending LLM access requests match your filters.
+          </p>
         ) : (
           <div className="divide-y">
             {filteredPending.map((req) => {
@@ -177,7 +199,9 @@ export function LLMSubscriptionQueuePage() {
                         {formatLlmAnnualSpending(calculateLlmAnnualSpending(req).annualSpendingUsd)}
                       </p>
                     </div>
-                    <span className="text-xs text-brand-blue">{isOpen ? 'Hide details' : 'Show details'}</span>
+                    <span className="text-xs text-brand-blue">
+                      {isOpen ? 'Hide details' : 'Show details'}
+                    </span>
                   </button>
                   {isOpen && (
                     <div className="rounded-lg border bg-slate-50 p-4">
@@ -188,12 +212,28 @@ export function LLMSubscriptionQueuePage() {
                     type="text"
                     placeholder="Reviewer comment (optional)"
                     value={comment[req.llm_request_id] ?? ''}
-                    onChange={(e) => setComment({ ...comment, [req.llm_request_id]: e.target.value })}
+                    onChange={(e) =>
+                      setComment({ ...comment, [req.llm_request_id]: e.target.value })
+                    }
                     className="w-full rounded-lg border px-3 py-2 text-sm bg-brand-white"
                   />
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => approve(req.llm_request_id, req.subscription_id)} disabled={processingId === req.llm_request_id} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50">{processingId === req.llm_request_id ? 'Provisioning…' : 'Approve'}</button>
-                    <button type="button" onClick={() => reject(req.llm_request_id, req.subscription_id)} disabled={processingId === req.llm_request_id} className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm disabled:opacity-50">Reject</button>
+                    <button
+                      type="button"
+                      onClick={() => approve(req.llm_request_id, req.subscription_id)}
+                      disabled={processingId === req.llm_request_id}
+                      className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+                    >
+                      {processingId === req.llm_request_id ? 'Provisioning…' : 'Approve'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => reject(req.llm_request_id, req.subscription_id)}
+                      disabled={processingId === req.llm_request_id}
+                      className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
                   </div>
                 </div>
               );
@@ -222,7 +262,9 @@ export function LLMSubscriptionQueuePage() {
                   <td className="px-4 py-3">{r.use_case_name}</td>
                   <td className="px-4 py-3">{getUserById(r.requested_by_user_id)?.display_name}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${r.status === 'approved' ? 'bg-brand-green-light text-brand-green' : 'bg-red-100 text-red-700'}`}>
+                    <span
+                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${r.status === 'approved' ? 'bg-brand-green-light text-brand-green' : 'bg-red-100 text-red-700'}`}
+                    >
                       {r.status}
                     </span>
                   </td>
@@ -232,7 +274,11 @@ export function LLMSubscriptionQueuePage() {
                 </tr>
               ))}
               {filteredReviewed.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">No reviewed requests match your filters.</td></tr>
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
+                    No reviewed requests match your filters.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

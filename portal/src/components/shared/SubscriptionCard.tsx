@@ -28,7 +28,13 @@ interface SubscriptionCardProps {
   credential?: Credential;
 }
 
-export function SubscriptionCard({ subscription, api, application, domainName, credential }: SubscriptionCardProps) {
+export function SubscriptionCard({
+  subscription,
+  api,
+  application,
+  domainName,
+  credential,
+}: SubscriptionCardProps) {
   const showCreds = credential && subscription.status === 'active';
 
   return (
@@ -58,7 +64,9 @@ export function SubscriptionCard({ subscription, api, application, domainName, c
           <ClassificationBadge classification={api.classification} />
         </div>
 
-        <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">{subscription.purpose}</p>
+        <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">
+          {subscription.purpose}
+        </p>
 
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-500">
           {application && (
@@ -80,8 +88,13 @@ export function SubscriptionCard({ subscription, api, application, domainName, c
 
         {showWorkflow(subscription.status) && (
           <div className="rounded-lg bg-slate-50/80 border border-slate-100 px-4 py-3">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Approval progress</p>
-            <WorkflowTracker status={subscription.status} providerStatus={subscription.provider_status} />
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">
+              Approval progress
+            </p>
+            <WorkflowTracker
+              status={subscription.status}
+              providerStatus={subscription.provider_status}
+            />
           </div>
         )}
 

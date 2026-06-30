@@ -22,9 +22,9 @@ export function ProviderAccessQueuePage() {
       const user = getUserById(userId);
       const domain = domains.find((d) => d.domain_id === domainId);
       return (
-        user?.display_name.toLowerCase().includes(q)
-        || user?.email.toLowerCase().includes(q)
-        || domain?.name.toLowerCase().includes(q)
+        user?.display_name.toLowerCase().includes(q) ||
+        user?.email.toLowerCase().includes(q) ||
+        domain?.name.toLowerCase().includes(q)
       );
     }
     return true;
@@ -74,7 +74,8 @@ export function ProviderAccessQueuePage() {
 
   const reject = (requestId: string, userId: string, domainId: string) => {
     if (!state.currentUser) return;
-    if (!window.confirm('Reject this publisher access request? The developer will be notified.')) return;
+    if (!window.confirm('Reject this publisher access request? The developer will be notified.'))
+      return;
     dispatch({
       type: 'UPDATE_PROVIDER_REQUEST',
       payload: {
@@ -107,7 +108,9 @@ export function ProviderAccessQueuePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Provider Access Requests</h1>
-        <p className="text-sm text-slate-500 mt-1">Review developer requests for domain-scoped publisher capability.</p>
+        <p className="text-sm text-slate-500 mt-1">
+          Review developer requests for domain-scoped publisher capability.
+        </p>
       </div>
 
       <ListFilterBar
@@ -121,11 +124,19 @@ export function ProviderAccessQueuePage() {
         }}
         resultLabel={`${filteredPending.length} pending · ${filteredReviewed.length} reviewed`}
       >
-        <select value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <select
+          value={domainFilter}
+          onChange={(e) => setDomainFilter(e.target.value)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        >
           <option value="">All domains</option>
-          {domains.filter((d) => d.domain_id !== 'dom_ai').map((d) => (
-            <option key={d.domain_id} value={d.domain_id}>{d.name}</option>
-          ))}
+          {domains
+            .filter((d) => d.domain_id !== 'dom_ai')
+            .map((d) => (
+              <option key={d.domain_id} value={d.domain_id}>
+                {d.name}
+              </option>
+            ))}
         </select>
       </ListFilterBar>
 
@@ -145,11 +156,17 @@ export function ProviderAccessQueuePage() {
                   <div className="flex flex-wrap justify-between gap-2">
                     <div>
                       <p className="font-semibold">{user?.display_name}</p>
-                      <p className="text-sm text-slate-500">{user?.email} · {domain?.name}</p>
+                      <p className="text-sm text-slate-500">
+                        {user?.email} · {domain?.name}
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-400">{new Date(r.created_at).toLocaleString()}</p>
+                    <p className="text-xs text-slate-400">
+                      {new Date(r.created_at).toLocaleString()}
+                    </p>
                   </div>
-                  <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{r.justification}</p>
+                  <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">
+                    {r.justification}
+                  </p>
                   <input
                     type="text"
                     placeholder="Reviewer comment (optional)"
@@ -158,8 +175,20 @@ export function ProviderAccessQueuePage() {
                     className="w-full rounded-lg border px-3 py-2 text-sm"
                   />
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => approve(r.request_id, r.user_id, r.domain_id)} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Approve</button>
-                    <button type="button" onClick={() => reject(r.request_id, r.user_id, r.domain_id)} className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm">Reject</button>
+                    <button
+                      type="button"
+                      onClick={() => approve(r.request_id, r.user_id, r.domain_id)}
+                      className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => reject(r.request_id, r.user_id, r.domain_id)}
+                      className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm"
+                    >
+                      Reject
+                    </button>
                   </div>
                 </div>
               );
@@ -186,13 +215,19 @@ export function ProviderAccessQueuePage() {
               {filteredReviewed.map((r) => (
                 <tr key={r.request_id} className="border-t">
                   <td className="px-4 py-3">{getUserById(r.user_id)?.display_name}</td>
-                  <td className="px-4 py-3">{domains.find((d) => d.domain_id === r.domain_id)?.name}</td>
+                  <td className="px-4 py-3">
+                    {domains.find((d) => d.domain_id === r.domain_id)?.name}
+                  </td>
                   <td className="px-4 py-3 capitalize">{r.status}</td>
                   <td className="px-4 py-3 text-slate-500">{r.reviewer_comment}</td>
                 </tr>
               ))}
               {filteredReviewed.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">No reviewed requests match your filters.</td></tr>
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
+                    No reviewed requests match your filters.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -202,14 +237,18 @@ export function ProviderAccessQueuePage() {
       <div className="rounded-xl border bg-brand-white p-4">
         <h3 className="font-semibold text-sm mb-2">Current developer publisher domains</h3>
         <ul className="text-sm space-y-1">
-          {state.users.filter((u) => u.portal_roles.includes('developer')).map((u) => (
-            <li key={u.user_id}>
-              <strong>{u.display_name}:</strong>{' '}
-              {u.provider_domains.length
-                ? u.provider_domains.map((id) => state.domains.find((d) => d.domain_id === id)?.name ?? id).join(', ')
-                : 'None'}
-            </li>
-          ))}
+          {state.users
+            .filter((u) => u.portal_roles.includes('developer'))
+            .map((u) => (
+              <li key={u.user_id}>
+                <strong>{u.display_name}:</strong>{' '}
+                {u.provider_domains.length
+                  ? u.provider_domains
+                      .map((id) => state.domains.find((d) => d.domain_id === id)?.name ?? id)
+                      .join(', ')
+                  : 'None'}
+              </li>
+            ))}
         </ul>
       </div>
     </div>

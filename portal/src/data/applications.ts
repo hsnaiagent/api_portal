@@ -1,11 +1,7 @@
 import type { Application } from '@/types';
 
-
-
 export const initialApplications: Application[] = [
-
   {
-
     application_id: 'app_hr_dashboard',
 
     team_id: 'team_hr_analytics',
@@ -15,7 +11,6 @@ export const initialApplications: Application[] = [
     description: 'Executive HR reporting application',
 
     application_description:
-
       'A dashboard for HR leadership showing monthly salary statistics, headcount trends, and organizational structure for workforce planning.',
 
     owner_user_id: 'user_developer',
@@ -23,11 +18,9 @@ export const initialApplications: Application[] = [
     environment: 'sandbox',
 
     status: 'active',
-
   },
 
   {
-
     application_id: 'app_fin_forecast',
 
     team_id: 'team_fin_reporting',
@@ -37,7 +30,6 @@ export const initialApplications: Application[] = [
     description: 'Budget forecasting integration',
 
     application_description:
-
       'Integrates budget forecasts with actuals for quarterly financial planning reports.',
 
     owner_user_id: 'user_murad',
@@ -45,11 +37,9 @@ export const initialApplications: Application[] = [
     environment: 'sandbox',
 
     status: 'active',
-
   },
 
   {
-
     application_id: 'app_sales_insights',
 
     team_id: 'team_sales_crm',
@@ -65,11 +55,9 @@ export const initialApplications: Application[] = [
     environment: 'production',
 
     status: 'active',
-
   },
 
   {
-
     application_id: 'app_ops_monitor',
 
     team_id: 'team_ops_plant',
@@ -79,7 +67,6 @@ export const initialApplications: Application[] = [
     description: 'Real-time production and safety metrics',
 
     application_description:
-
       'Monitors daily production output and safety incident trends across plant operations.',
 
     owner_user_id: 'user_murad',
@@ -87,7 +74,5 @@ export const initialApplications: Application[] = [
     environment: 'sandbox',
 
     status: 'active',
-
   },
-
 ];
