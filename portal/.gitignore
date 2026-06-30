@@ -1,1 +1,4 @@
 server/data/portal-state.json
+server/data/portal-state.json.tmp
+server/data/portal-state.json.bak
+server/data/portal-state.json.corrupt-*

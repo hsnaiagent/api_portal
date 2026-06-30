@@ -3,35 +3,100 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { emptyEnvelope, normalizeData, validateData } from './state-schema.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'portal-state.json');
+const TMP_FILE = `${DATA_FILE}.tmp`;
+const BAK_FILE = `${DATA_FILE}.bak`;
 const PORT = Number(process.env.PORT) || 3001;
 const POLL_HEADER = 'x-portal-revision';
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '25mb' }));
 
+// Serialize all writes through a single promise chain so concurrent PUTs
+// cannot interleave their read-modify-write cycles (lost-update protection).
+let writeChain = Promise.resolve();
+function enqueueWrite(task) {
+  const run = writeChain.then(task, task);
+  // Keep the chain alive even if a task rejects.
+  writeChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+async function parseFile(file) {
+  const raw = await fs.readFile(file, 'utf-8');
+  return JSON.parse(raw);
+}
+
+/**
+ * Read the persisted envelope with recovery:
+ * 1. Try the live file.
+ * 2. On corruption, try the .bak file.
+ * 3. If both fail, quarantine the corrupt file and return an empty envelope.
+ */
 async function readEnvelope() {
+  if (!existsSync(DATA_FILE)) return emptyEnvelope();
   try {
-    const raw = await fs.readFile(DATA_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch {
-    return { _revision: 0, _updatedAt: null, _seedVersion: 0, data: null };
+    return await parseFile(DATA_FILE);
+  } catch (primaryErr) {
+    console.error('[state] live file unreadable, attempting .bak recovery:', primaryErr.message);
+    if (existsSync(BAK_FILE)) {
+      try {
+        const recovered = await parseFile(BAK_FILE);
+        console.warn('[state] recovered from .bak');
+        return recovered;
+      } catch (bakErr) {
+        console.error('[state] .bak also unreadable:', bakErr.message);
+      }
+    }
+    try {
+      const quarantine = `${DATA_FILE}.corrupt-${Date.now()}`;
+      await fs.rename(DATA_FILE, quarantine);
+      console.error(`[state] quarantined corrupt file to ${path.basename(quarantine)}`);
+    } catch {
+      /* ignore quarantine failures */
+    }
+    return emptyEnvelope();
   }
 }
 
-async function writeEnvelope(data, seedVersion = 0) {
+/**
+ * Atomically persist a new envelope: write to a temp file, fsync-style flush via
+ * writeFile, back up the previous good file, then rename temp over the target.
+ * rename(2) is atomic on the same filesystem, so readers never see a partial file.
+ */
+async function writeEnvelope(data, seedVersion, baseRevision) {
   await fs.mkdir(DATA_DIR, { recursive: true });
   const current = await readEnvelope();
+
+  // Optimistic concurrency: if the client based its edit on an older revision,
+  // reject so it can refetch/merge instead of clobbering a newer write.
+  if (typeof baseRevision === 'number' && (current._revision ?? 0) !== baseRevision) {
+    const conflict = new Error('revision_conflict');
+    conflict.code = 'CONFLICT';
+    conflict.current = current;
+    throw conflict;
+  }
+
   const envelope = {
     _revision: (current._revision ?? 0) + 1,
     _updatedAt: new Date().toISOString(),
     _seedVersion: seedVersion || current._seedVersion || 0,
-    data,
+    data: normalizeData(data),
   };
-  await fs.writeFile(DATA_FILE, JSON.stringify(envelope, null, 2), 'utf-8');
+
+  const serialized = JSON.stringify(envelope, null, 2);
+  await fs.writeFile(TMP_FILE, serialized, 'utf-8');
+  if (existsSync(DATA_FILE)) {
+    await fs.copyFile(DATA_FILE, BAK_FILE);
+  }
+  await fs.rename(TMP_FILE, DATA_FILE);
   return envelope;
 }
 
@@ -50,9 +115,28 @@ app.put('/api/state', async (req, res) => {
     res.status(400).json({ error: 'Missing data payload' });
     return;
   }
-  const envelope = await writeEnvelope(req.body.data, req.body._seedVersion ?? 0);
-  res.setHeader(POLL_HEADER, String(envelope._revision));
-  res.json(envelope);
+
+  const { valid, errors } = validateData(req.body.data);
+  if (!valid) {
+    res.status(400).json({ error: 'Invalid state payload', details: errors.slice(0, 20) });
+    return;
+  }
+
+  try {
+    const envelope = await enqueueWrite(() =>
+      writeEnvelope(req.body.data, req.body._seedVersion ?? 0, req.body._baseRevision),
+    );
+    res.setHeader(POLL_HEADER, String(envelope._revision));
+    res.json(envelope);
+  } catch (err) {
+    if (err.code === 'CONFLICT') {
+      res.setHeader(POLL_HEADER, String(err.current._revision ?? 0));
+      res.status(409).json({ error: 'revision_conflict', current: err.current });
+      return;
+    }
+    console.error('[state] write failed:', err);
+    res.status(500).json({ error: 'Failed to persist state' });
+  }
 });
 
 const distPath = path.join(__dirname, '..', 'dist');
