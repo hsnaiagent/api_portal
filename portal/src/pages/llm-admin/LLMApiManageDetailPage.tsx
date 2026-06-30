@@ -1,8 +1,8 @@
-import { useState } from 'react';
-
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { usePortal } from '@/store/AppStore';
+
+import { useNotify } from '@/hooks/useNotify';
 
 import { LIFECYCLE_TRANSITIONS, LIFECYCLE_LABELS } from '@/config/lifecycle';
 
@@ -21,6 +21,8 @@ export function LLMApiManageDetailPage() {
   const { id } = useParams<{ id: string }>();
 
   const { state, dispatch } = usePortal();
+
+  const notify = useNotify();
 
   const api = state.apis.find((a) => a.api_id === id && a.domain_id === 'dom_ai');
 
@@ -48,7 +50,41 @@ export function LLMApiManageDetailPage() {
 
   const transition = (next: LifecycleStatus) => {
 
+    if (!window.confirm(`Move "${api.name}" to ${LIFECYCLE_LABELS[next]}?`)) return;
+
     dispatch({ type: 'UPDATE_API', payload: { api_id: api.api_id, patch: { lifecycle_status: next } } });
+
+    if (state.currentUser) {
+
+      dispatch({
+
+        type: 'ADD_AUDIT',
+
+        payload: {
+
+          audit_id: `aud_${Date.now()}`,
+
+          timestamp: new Date().toISOString(),
+
+          actor_user_id: state.currentUser.user_id,
+
+          actor_type: 'user',
+
+          action: 'api.lifecycle.changed',
+
+          entity_type: 'api',
+
+          entity_id: api.api_id,
+
+          payload: { from: api.lifecycle_status, to: next },
+
+        },
+
+      });
+
+    }
+
+    notify('Lifecycle updated', `${api.name} moved to ${LIFECYCLE_LABELS[next]}.`, 'success');
 
   };
 
@@ -57,6 +93,8 @@ export function LLMApiManageDetailPage() {
   return (
 
     <div className="space-y-6 max-w-2xl">
+
+      <Link to={ROUTES.llmAdmin.myApis} className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline">← Back to My LLM APIs</Link>
 
       <h1 className="text-2xl font-bold">{api.name}</h1>
 

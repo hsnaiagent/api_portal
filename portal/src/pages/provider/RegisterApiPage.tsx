@@ -11,7 +11,7 @@ import { CLASSIFICATIONS } from '@/config/classification';
 import { ROUTES } from '@/config/routes';
 import type { API, Classification, OpenAPIEndpoint } from '@/types';
 
-export function RegisterApiPage({ fixedDomainId, successRoute }: { fixedDomainId?: string; successRoute?: string } = {}) {
+export function RegisterApiPage({ fixedDomainId, successRoute, llmMode }: { fixedDomainId?: string; successRoute?: string; llmMode?: boolean } = {}) {
   const { state, dispatch } = usePortal();
   const navigate = useNavigate();
   const notify = useNotify();
@@ -22,6 +22,9 @@ export function RegisterApiPage({ fixedDomainId, successRoute }: { fixedDomainId
   const [classification, setClassification] = useState<Classification>('internal');
   const [tier, setTier] = useState<1 | 2 | 3>(1);
   const [tags, setTags] = useState<string[]>([]);
+  const [llmModel, setLlmModel] = useState('');
+  const [llmRateLimit, setLlmRateLimit] = useState('');
+  const [llmTokenBudget, setLlmTokenBudget] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [aiText, setAiText] = useState<string>();
@@ -118,6 +121,15 @@ export function RegisterApiPage({ fixedDomainId, successRoute }: { fixedDomainId
         tags,
         version,
         endpoints,
+        ...(llmMode
+          ? {
+              llm_config: {
+                model: llmModel.trim() || undefined,
+                rate_limit_per_min: llmRateLimit ? Number(llmRateLimit) : undefined,
+                monthly_token_budget: llmTokenBudget ? Number(llmTokenBudget) : undefined,
+              },
+            }
+          : {}),
       };
       dispatch({ type: 'ADD_API', payload: api });
       dispatch({
@@ -205,6 +217,23 @@ export function RegisterApiPage({ fixedDomainId, successRoute }: { fixedDomainId
             <option value={2}>Tier 2 — Gateway proxied</option>
             <option value={3}>Tier 3 — Gateway native</option>
           </select>
+          {llmMode && (
+            <div className="rounded-lg border border-brand-blue/30 bg-brand-blue-light/40 p-4 space-y-3">
+              <p className="text-sm font-medium text-brand-blue-dark">LLM configuration</p>
+              <div>
+                <label htmlFor="llm-model" className="block text-sm font-medium mb-1">Model</label>
+                <input id="llm-model" value={llmModel} onChange={(e) => setLlmModel(e.target.value)} placeholder="e.g. gpt-4o, claude-3.5, internal-rag-v2" className="w-full rounded-lg border px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label htmlFor="llm-rate" className="block text-sm font-medium mb-1">Rate limit (requests/min)</label>
+                <input id="llm-rate" type="number" min={0} value={llmRateLimit} onChange={(e) => setLlmRateLimit(e.target.value)} placeholder="e.g. 60" className="w-full rounded-lg border px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label htmlFor="llm-budget" className="block text-sm font-medium mb-1">Monthly token budget</label>
+                <input id="llm-budget" type="number" min={0} value={llmTokenBudget} onChange={(e) => setLlmTokenBudget(e.target.value)} placeholder="e.g. 5000000" className="w-full rounded-lg border px-3 py-2 text-sm" />
+              </div>
+            </div>
+          )}
           <div className="flex gap-2">
             <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Back</button>
             <button type="button" onClick={submit} disabled={busy} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50">{submitting ? 'Submitting…' : 'Submit proposal'}</button>

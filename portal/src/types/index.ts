@@ -164,6 +164,18 @@ export interface ApiSearchIndex {
 
 
 
+export interface LlmConfig {
+
+  model?: string;
+
+  rate_limit_per_min?: number;
+
+  monthly_token_budget?: number;
+
+}
+
+
+
 export interface API {
 
   api_id: string;
@@ -193,6 +205,8 @@ export interface API {
   endpoints: OpenAPIEndpoint[];
 
   search_index?: ApiSearchIndex;
+
+  llm_config?: LlmConfig;
 
 }
 

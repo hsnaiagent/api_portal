@@ -364,6 +364,20 @@ export function ApiDetailPage() {
 
       )}
 
+      {api.llm_config && (api.llm_config.model || api.llm_config.rate_limit_per_min || api.llm_config.monthly_token_budget) && (
+
+        <div className="flex flex-wrap gap-2 text-xs">
+
+          {api.llm_config.model && <span className="rounded-full bg-slate-100 px-3 py-1">Model: {api.llm_config.model}</span>}
+
+          {api.llm_config.rate_limit_per_min != null && <span className="rounded-full bg-slate-100 px-3 py-1">{api.llm_config.rate_limit_per_min} req/min</span>}
+
+          {api.llm_config.monthly_token_budget != null && <span className="rounded-full bg-slate-100 px-3 py-1">{api.llm_config.monthly_token_budget.toLocaleString()} tokens/mo</span>}
+
+        </div>
+
+      )}
+
 
 
       {!hasActiveSub && !hasPendingLlm && api.lifecycle_status === 'published' && (

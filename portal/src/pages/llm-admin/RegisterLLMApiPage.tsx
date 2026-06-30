@@ -8,7 +8,7 @@ export function RegisterLLMApiPage() {
 
   return (
 
-    <RegisterApiPage fixedDomainId="dom_ai" successRoute={ROUTES.llmAdmin.myApis} />
+    <RegisterApiPage fixedDomainId="dom_ai" successRoute={ROUTES.llmAdmin.myApis} llmMode />
 
   );
 

@@ -15,6 +15,23 @@ export function LLMSubscriptionQueuePage() {
   const [comment, setComment] = useState<Record<string, string>>({});
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const audit = (action: string, llmRequestId: string) => {
+    if (!state.currentUser) return;
+    dispatch({
+      type: 'ADD_AUDIT',
+      payload: {
+        audit_id: `aud_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actor_user_id: state.currentUser.user_id,
+        actor_type: 'user',
+        action,
+        entity_type: 'llm_request',
+        entity_id: llmRequestId,
+      },
+    });
+  };
 
   const pending = state.llmSubscriptionRequests.filter((r) => r.status === 'pending');
   const reviewed = state.llmSubscriptionRequests.filter((r) => r.status !== 'pending');
@@ -48,40 +65,51 @@ export function LLMSubscriptionQueuePage() {
   const hasActiveFilters = Boolean(query || statusFilter !== 'all');
 
   const approve = async (llmRequestId: string, subscriptionId: string) => {
+    if (!state.currentUser) return;
     const sub = state.subscriptions.find((s) => s.subscription_id === subscriptionId);
-    dispatch({
-      type: 'UPDATE_LLM_REQUEST',
-      payload: {
-        llm_request_id: llmRequestId,
-        patch: {
-          status: 'approved',
-          reviewer_id: state.currentUser!.user_id,
-          reviewer_comment: comment[llmRequestId] || 'Approved',
-          reviewed_at: new Date().toISOString(),
-        },
-      },
-    });
-    if (sub) {
+    setProcessingId(llmRequestId);
+    try {
+      if (sub) await provisionSubscription(sub);
       dispatch({
-        type: 'UPDATE_SUBSCRIPTION',
+        type: 'UPDATE_LLM_REQUEST',
         payload: {
-          subscription_id: subscriptionId,
-          patch: { status: 'active', provider_status: 'accepted', approved_at: new Date().toISOString() },
+          llm_request_id: llmRequestId,
+          patch: {
+            status: 'approved',
+            reviewer_id: state.currentUser.user_id,
+            reviewer_comment: comment[llmRequestId] || 'Approved',
+            reviewed_at: new Date().toISOString(),
+          },
         },
       });
-      await provisionSubscription(sub);
+      if (sub) {
+        dispatch({
+          type: 'UPDATE_SUBSCRIPTION',
+          payload: {
+            subscription_id: subscriptionId,
+            patch: { status: 'active', provider_status: 'accepted', approved_at: new Date().toISOString() },
+          },
+        });
+      }
+      audit('llm_access.approved', llmRequestId);
+      notify('LLM access approved', 'Subscription activated and credentials provisioned.', 'success');
+    } catch {
+      notify('Approval failed', 'Could not provision the subscription. Please try again.', 'error');
+    } finally {
+      setProcessingId(null);
     }
-    notify('LLM access approved', 'Subscription activated and credentials provisioned.', 'success');
   };
 
   const reject = (llmRequestId: string, subscriptionId: string) => {
+    if (!state.currentUser) return;
+    if (!window.confirm('Reject this LLM access request? The developer will be notified.')) return;
     dispatch({
       type: 'UPDATE_LLM_REQUEST',
       payload: {
         llm_request_id: llmRequestId,
         patch: {
           status: 'rejected',
-          reviewer_id: state.currentUser!.user_id,
+          reviewer_id: state.currentUser.user_id,
           reviewer_comment: comment[llmRequestId] || 'Rejected',
           reviewed_at: new Date().toISOString(),
         },
@@ -91,6 +119,7 @@ export function LLMSubscriptionQueuePage() {
       type: 'UPDATE_SUBSCRIPTION',
       payload: { subscription_id: subscriptionId, patch: { status: 'revoked', provider_status: 'rejected' } },
     });
+    audit('llm_access.rejected', llmRequestId);
     notify('LLM access rejected', 'Developer has been notified.', 'warning');
   };
 
@@ -148,7 +177,7 @@ export function LLMSubscriptionQueuePage() {
                         {formatLlmAnnualSpending(calculateLlmAnnualSpending(req).annualSpendingUsd)}
                       </p>
                     </div>
-                    <span className="text-xs text-brand-blue">{isOpen ? 'Hide details' : 'Show all 11 fields'}</span>
+                    <span className="text-xs text-brand-blue">{isOpen ? 'Hide details' : 'Show details'}</span>
                   </button>
                   {isOpen && (
                     <div className="rounded-lg border bg-slate-50 p-4">
@@ -163,8 +192,8 @@ export function LLMSubscriptionQueuePage() {
                     className="w-full rounded-lg border px-3 py-2 text-sm bg-brand-white"
                   />
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => approve(req.llm_request_id, req.subscription_id)} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Approve</button>
-                    <button type="button" onClick={() => reject(req.llm_request_id, req.subscription_id)} className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm">Reject</button>
+                    <button type="button" onClick={() => approve(req.llm_request_id, req.subscription_id)} disabled={processingId === req.llm_request_id} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50">{processingId === req.llm_request_id ? 'Provisioning…' : 'Approve'}</button>
+                    <button type="button" onClick={() => reject(req.llm_request_id, req.subscription_id)} disabled={processingId === req.llm_request_id} className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm disabled:opacity-50">Reject</button>
                   </div>
                 </div>
               );
@@ -192,7 +221,11 @@ export function LLMSubscriptionQueuePage() {
                 <tr key={r.llm_request_id} className="border-t">
                   <td className="px-4 py-3">{r.use_case_name}</td>
                   <td className="px-4 py-3">{getUserById(r.requested_by_user_id)?.display_name}</td>
-                  <td className="px-4 py-3 capitalize">{r.status}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${r.status === 'approved' ? 'bg-brand-green-light text-brand-green' : 'bg-red-100 text-red-700'}`}>
+                      {r.status}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     {formatLlmAnnualSpending(calculateLlmAnnualSpending(r).annualSpendingUsd)}
                   </td>
