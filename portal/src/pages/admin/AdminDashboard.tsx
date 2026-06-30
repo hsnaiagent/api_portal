@@ -40,7 +40,10 @@ export function AdminDashboard() {
       <div className="flex flex-wrap gap-3">
         <Link to={ROUTES.admin.proposals} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Proposals Queue</Link>
         <Link to={ROUTES.admin.publishing} className="rounded-lg border px-4 py-2 text-sm">Publishing Queue</Link>
+        <Link to={ROUTES.admin.allApis} className="rounded-lg border px-4 py-2 text-sm">All APIs</Link>
         <Link to={ROUTES.admin.providerRequests} className="rounded-lg border px-4 py-2 text-sm">Provider Access Requests</Link>
+        <Link to={ROUTES.admin.rbac} className="rounded-lg border px-4 py-2 text-sm">RBAC</Link>
+        <Link to={ROUTES.admin.domains} className="rounded-lg border px-4 py-2 text-sm">Domain Registry</Link>
         <Link to={ROUTES.admin.audit} className="rounded-lg border px-4 py-2 text-sm">Audit Log</Link>
       </div>
     </div>

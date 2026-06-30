@@ -2,12 +2,35 @@ import { useMemo, useState } from 'react';
 import { usePortal } from '@/store/AppStore';
 import { ClassificationBadge } from '@/components/shared/ClassificationBadge';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
+import { useNotify } from '@/hooks/useNotify';
 import { CLASSIFICATIONS } from '@/config/classification';
-import type { Classification } from '@/types';
+import type { Classification, LifecycleStatus } from '@/types';
 
 export function PublishingQueuePage() {
   const { state, dispatch } = usePortal();
+  const notify = useNotify();
   const testing = state.apis.filter((a) => a.lifecycle_status === 'in_testing');
+
+  const move = (apiId: string, name: string, next: LifecycleStatus, message: string) => {
+    if (next === 'published' && !window.confirm(`Publish "${name}"? It will become visible and subscribable.`)) return;
+    dispatch({ type: 'UPDATE_API', payload: { api_id: apiId, patch: { lifecycle_status: next } } });
+    if (state.currentUser) {
+      dispatch({
+        type: 'ADD_AUDIT',
+        payload: {
+          audit_id: `aud_${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          actor_user_id: state.currentUser.user_id,
+          actor_type: 'user',
+          action: 'api.lifecycle.changed',
+          entity_type: 'api',
+          entity_id: apiId,
+          payload: { to: next },
+        },
+      });
+    }
+    notify('Lifecycle updated', message, 'success');
+  };
   const [query, setQuery] = useState('');
   const [classFilter, setClassFilter] = useState('');
 
@@ -52,8 +75,8 @@ export function PublishingQueuePage() {
             <ClassificationBadge classification={api.classification} />
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => dispatch({ type: 'UPDATE_API', payload: { api_id: api.api_id, patch: { lifecycle_status: 'published' } } })} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Approve publish</button>
-            <button type="button" onClick={() => dispatch({ type: 'UPDATE_API', payload: { api_id: api.api_id, patch: { lifecycle_status: 'in_development' } } })} className="rounded-lg border px-4 py-2 text-sm">Return to dev</button>
+            <button type="button" onClick={() => move(api.api_id, api.name, 'published', `${api.name} is now published.`)} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Approve publish</button>
+            <button type="button" onClick={() => move(api.api_id, api.name, 'in_development', `${api.name} returned to development.`)} className="rounded-lg border px-4 py-2 text-sm">Return to dev</button>
           </div>
         </div>
       ))}

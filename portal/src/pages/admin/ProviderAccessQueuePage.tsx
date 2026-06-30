@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { usePortal } from '@/store/AppStore';
-import { getUserById, users } from '@/data/users';
+import { getUserById } from '@/data/users';
 import { domains } from '@/data/domains';
 import { useNotify } from '@/hooks/useNotify';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
@@ -42,13 +42,14 @@ export function ProviderAccessQueuePage() {
   const hasActiveFilters = Boolean(query || domainFilter);
 
   const approve = (requestId: string, userId: string, domainId: string) => {
+    if (!state.currentUser) return;
     dispatch({
       type: 'UPDATE_PROVIDER_REQUEST',
       payload: {
         request_id: requestId,
         patch: {
           status: 'approved',
-          reviewer_id: state.currentUser!.user_id,
+          reviewer_id: state.currentUser.user_id,
           reviewer_comment: comment[requestId] || 'Approved',
           reviewed_at: new Date().toISOString(),
         },
@@ -60,7 +61,7 @@ export function ProviderAccessQueuePage() {
       payload: {
         audit_id: `aud_${Date.now()}`,
         timestamp: new Date().toISOString(),
-        actor_user_id: state.currentUser!.user_id,
+        actor_user_id: state.currentUser.user_id,
         actor_type: 'user',
         action: 'provider_access.approved',
         entity_type: 'provider_access_request',
@@ -71,17 +72,32 @@ export function ProviderAccessQueuePage() {
     notify('Access granted', 'Developer publisher capability updated.', 'success');
   };
 
-  const reject = (requestId: string) => {
+  const reject = (requestId: string, userId: string, domainId: string) => {
+    if (!state.currentUser) return;
+    if (!window.confirm('Reject this publisher access request? The developer will be notified.')) return;
     dispatch({
       type: 'UPDATE_PROVIDER_REQUEST',
       payload: {
         request_id: requestId,
         patch: {
           status: 'rejected',
-          reviewer_id: state.currentUser!.user_id,
+          reviewer_id: state.currentUser.user_id,
           reviewer_comment: comment[requestId] || 'Rejected',
           reviewed_at: new Date().toISOString(),
         },
+      },
+    });
+    dispatch({
+      type: 'ADD_AUDIT',
+      payload: {
+        audit_id: `aud_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actor_user_id: state.currentUser.user_id,
+        actor_type: 'user',
+        action: 'provider_access.rejected',
+        entity_type: 'provider_access_request',
+        entity_id: requestId,
+        payload: { user_id: userId, domain_id: domainId },
       },
     });
     notify('Request rejected', 'Developer has been notified.', 'warning');
@@ -143,7 +159,7 @@ export function ProviderAccessQueuePage() {
                   />
                   <div className="flex gap-2">
                     <button type="button" onClick={() => approve(r.request_id, r.user_id, r.domain_id)} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Approve</button>
-                    <button type="button" onClick={() => reject(r.request_id)} className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm">Reject</button>
+                    <button type="button" onClick={() => reject(r.request_id, r.user_id, r.domain_id)} className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm">Reject</button>
                   </div>
                 </div>
               );
@@ -186,12 +202,12 @@ export function ProviderAccessQueuePage() {
       <div className="rounded-xl border bg-brand-white p-4">
         <h3 className="font-semibold text-sm mb-2">Current developer publisher domains</h3>
         <ul className="text-sm space-y-1">
-          {users.filter((u) => u.portal_roles.includes('developer')).map((u) => (
+          {state.users.filter((u) => u.portal_roles.includes('developer')).map((u) => (
             <li key={u.user_id}>
               <strong>{u.display_name}:</strong>{' '}
               {u.provider_domains.length
-                ? u.provider_domains.map((id) => domains.find((d) => d.domain_id === id)?.name).join(', ')
-                : 'None (check live session for approved grants)'}
+                ? u.provider_domains.map((id) => state.domains.find((d) => d.domain_id === id)?.name ?? id).join(', ')
+                : 'None'}
             </li>
           ))}
         </ul>

@@ -5,13 +5,15 @@ import { LifecycleBadge } from '@/components/shared/LifecycleBadge';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
 import { Pagination } from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
+import { useNotify } from '@/hooks/useNotify';
 import { domains } from '@/data/domains';
 import { CLASSIFICATIONS } from '@/config/classification';
 import { LIFECYCLE_LABELS } from '@/config/lifecycle';
-import type { Classification, LifecycleStatus } from '@/types';
+import type { API, Classification, LifecycleStatus } from '@/types';
 
 export function AllApisPage() {
   const { state, dispatch } = usePortal();
+  const notify = useNotify();
   const [query, setQuery] = useState('');
   const [domainFilter, setDomainFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -32,6 +34,26 @@ export function AllApisPage() {
 
   const hasActiveFilters = Boolean(query || domainFilter || statusFilter || classFilter);
   const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(filtered, 12);
+
+  const emergencyRetire = (api: API) => {
+    if (!state.currentUser) return;
+    if (!window.confirm(`Emergency-retire "${api.name}"? This immediately blocks all access and cannot be undone.`)) return;
+    dispatch({ type: 'UPDATE_API', payload: { api_id: api.api_id, patch: { lifecycle_status: 'emergency_retired' } } });
+    dispatch({
+      type: 'ADD_AUDIT',
+      payload: {
+        audit_id: `aud_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actor_user_id: state.currentUser.user_id,
+        actor_type: 'user',
+        action: 'api.emergency_retired',
+        entity_type: 'api',
+        entity_id: api.api_id,
+        payload: { from: api.lifecycle_status },
+      },
+    });
+    notify('API emergency-retired', `${api.name} has been retired and access blocked.`, 'warning');
+  };
 
   return (
     <div className="space-y-6">
@@ -77,7 +99,7 @@ export function AllApisPage() {
                 <td className="px-4 py-3"><ClassificationBadge classification={api.classification} /></td>
                 <td className="px-4 py-3">
                   {api.lifecycle_status !== 'emergency_retired' && (
-                    <button type="button" onClick={() => dispatch({ type: 'UPDATE_API', payload: { api_id: api.api_id, patch: { lifecycle_status: 'emergency_retired' } } })} className="text-xs text-red-600 hover:underline">Emergency retire</button>
+                    <button type="button" onClick={() => emergencyRetire(api)} className="text-xs text-red-600 hover:underline">Emergency retire</button>
                   )}
                 </td>
               </tr>

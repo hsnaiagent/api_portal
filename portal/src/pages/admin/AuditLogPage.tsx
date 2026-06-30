@@ -55,6 +55,24 @@ export function AuditLogPage() {
   const hasActiveFilters = Boolean(query || actionFilter || actorFilter);
   const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(filtered, 15);
 
+  const exportCsv = () => {
+    const header = ['timestamp', 'actor', 'actor_type', 'action', 'entity_type', 'entity_id'];
+    const rows = filtered.map((log) => {
+      const actor = log.actor_user_id ? getUserById(log.actor_user_id)?.display_name ?? log.actor_user_id : log.actor_type;
+      return [log.timestamp, actor, log.actor_type, log.action, log.entity_type, log.entity_id]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(',');
+    });
+    const csv = [header.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Audit Log</h1>
@@ -84,6 +102,7 @@ export function AuditLogPage() {
           <option value="">All actor types</option>
           <option value="user">User</option>
           <option value="system">System</option>
+          <option value="webhook">Webhook</option>
         </select>
       </ListFilterBar>
       <AuditLogTable logs={pageItems} />
@@ -96,7 +115,7 @@ export function AuditLogPage() {
         onPageChange={setPage}
         unit="entries"
       />
-      <button type="button" onClick={() => window.alert('Export simulated')} className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline">Export audit log (demo)</button>
+      <button type="button" onClick={exportCsv} disabled={filtered.length === 0} className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline disabled:opacity-50">Export {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'} as CSV</button>
     </div>
   );
 }

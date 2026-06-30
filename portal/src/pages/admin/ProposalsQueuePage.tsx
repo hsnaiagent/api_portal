@@ -4,11 +4,13 @@ import { getAIResponse } from '@/mocks/AIAdapter';
 import { ClassificationBadge } from '@/components/shared/ClassificationBadge';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
 import { AIBadge } from '@/components/ai/AIBadge';
+import { useNotify } from '@/hooks/useNotify';
 import { CLASSIFICATIONS } from '@/config/classification';
 import type { Classification } from '@/types';
 
 export function ProposalsQueuePage() {
   const { state, dispatch } = usePortal();
+  const notify = useNotify();
   const proposed = state.apis.filter((a) => a.lifecycle_status === 'proposed');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [workflowTip, setWorkflowTip] = useState<string>();
@@ -28,12 +30,33 @@ export function ProposalsQueuePage() {
 
   const hasActiveFilters = Boolean(query || classFilter);
 
-  const accept = async (apiId: string) => {
-    dispatch({ type: 'UPDATE_API', payload: { api_id: apiId, patch: { lifecycle_status: 'under_review' } } });
+  const audit = (action: string, apiId: string) => {
+    if (!state.currentUser) return;
+    dispatch({
+      type: 'ADD_AUDIT',
+      payload: {
+        audit_id: `aud_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actor_user_id: state.currentUser.user_id,
+        actor_type: 'user',
+        action,
+        entity_type: 'api',
+        entity_id: apiId,
+      },
+    });
   };
 
-  const reject = (apiId: string) => {
+  const accept = (apiId: string, name: string) => {
+    dispatch({ type: 'UPDATE_API', payload: { api_id: apiId, patch: { lifecycle_status: 'under_review' } } });
+    audit('api.proposal.accepted', apiId);
+    notify('Proposal accepted', `${name} moved to Under Review.`, 'success');
+  };
+
+  const reject = (apiId: string, name: string) => {
+    if (!window.confirm(`Reject the proposal for "${name}"?`)) return;
     dispatch({ type: 'UPDATE_API', payload: { api_id: apiId, patch: { lifecycle_status: 'rejected' } } });
+    audit('api.proposal.rejected', apiId);
+    notify('Proposal rejected', `${name} was rejected.`, 'warning');
   };
 
   const showWorkflow = async (apiId: string) => {
@@ -73,8 +96,8 @@ export function ProposalsQueuePage() {
           <button type="button" onClick={() => showWorkflow(api.api_id)} className="text-xs text-brand-blue"><AIBadge label="AI-11" /> Workflow suggestion</button>
           {expanded === api.api_id && workflowTip && <p className="text-sm bg-brand-blue-light p-3 rounded-lg">{workflowTip}</p>}
           <div className="flex gap-2">
-            <button type="button" onClick={() => accept(api.api_id)} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Accept for review</button>
-            <button type="button" onClick={() => reject(api.api_id)} className="rounded-lg border text-red-600 px-4 py-2 text-sm">Reject</button>
+            <button type="button" onClick={() => accept(api.api_id, api.name)} className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm">Accept for review</button>
+            <button type="button" onClick={() => reject(api.api_id, api.name)} className="rounded-lg border text-red-600 px-4 py-2 text-sm">Reject</button>
           </div>
         </div>
       ))}
