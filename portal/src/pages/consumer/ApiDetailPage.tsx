@@ -442,13 +442,45 @@ export function ApiDetailPage() {
 
         <Tabs.Content value="docs" className="pt-6 space-y-4">
 
+          <p className="text-xs text-slate-500">Version {api.version} · {api.endpoints.length} endpoint{api.endpoints.length === 1 ? '' : 's'}</p>
+
           {api.endpoints.map((ep, i) => (
 
-            <div key={i} className="rounded-xl border border-slate-200 bg-brand-white p-4">
+            <div key={i} className="rounded-xl border border-slate-200 bg-brand-white p-4 space-y-2">
 
               <p className="font-mono text-sm"><span className="font-bold text-brand-green">{ep.method}</span> {ep.path}</p>
 
-              <p className="text-sm text-slate-600 mt-1">{ep.summary}</p>
+              <p className="text-sm text-slate-600">{ep.summary}</p>
+
+              {ep.parameters && ep.parameters.length > 0 && (
+
+                <div className="text-xs text-slate-600">
+
+                  <p className="font-medium text-slate-500 mb-1">Parameters</p>
+
+                  <ul className="space-y-0.5">
+
+                    {ep.parameters.map((p) => (
+
+                      <li key={`${p.in}-${p.name}`} className="font-mono">
+
+                        {p.name} <span className="text-slate-400">({p.in}, {p.type}{p.required ? ', required' : ''})</span>
+
+                      </li>
+
+                    ))}
+
+                  </ul>
+
+                </div>
+
+              )}
+
+              {ep.responseExample && (
+
+                <pre className="overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-700">{JSON.stringify(ep.responseExample, null, 2)}</pre>
+
+              )}
 
             </div>
 
