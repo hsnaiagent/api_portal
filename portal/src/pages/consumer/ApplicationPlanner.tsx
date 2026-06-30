@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { usePortal } from '@/store/AppStore';
@@ -8,6 +8,8 @@ import { ApiCard } from '@/components/shared/ApiCard';
 import { SDKPanel } from '@/components/sdk/SDKPanel';
 import { useNotify } from '@/hooks/useNotify';
 import { ROUTES } from '@/config/routes';
+import { buildUserSubscriptionMap } from '@/lib/subscriptions';
+import { getDomainName } from '@/data/domains';
 import type { Subscription } from '@/types';
 
 export function ApplicationPlanner() {
@@ -19,6 +21,11 @@ export function ApplicationPlanner() {
   const [bundle, setBundle] = useState<{ id: string; label: string; score?: number; reason?: string }[]>([]);
   const [selected, setSelected] = useState<string[]>(state.plannerSelectedApiIds);
   const [previewApiId, setPreviewApiId] = useState<string | null>(null);
+
+  const subMap = useMemo(
+    () => buildUserSubscriptionMap(state.subscriptions, state.currentUser?.user_id),
+    [state.subscriptions, state.currentUser?.user_id],
+  );
 
   const analyze = async () => {
     setLoading(true);
@@ -96,6 +103,8 @@ export function ApplicationPlanner() {
                 <ApiCard
                   key={item.id}
                   api={api}
+                  subscription={subMap.get(api.api_id) ?? null}
+                  domainName={getDomainName(api.domain_id)}
                   score={item.score}
                   reason={item.reason}
                   selectable

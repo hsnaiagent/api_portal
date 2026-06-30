@@ -1,16 +1,24 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Search, FileKey } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { usePortal } from '@/store/AppStore';
 import { ApiCard } from '@/components/shared/ApiCard';
 import { useVisibleApis } from '@/hooks/useVisibleApis';
+import { buildUserSubscriptionMap, isPendingSubscription } from '@/lib/subscriptions';
+import { getDomainName } from '@/data/domains';
 
 export function ConsumerDashboard() {
   const { state } = usePortal();
   const visible = useVisibleApis(state.apis).slice(0, 4);
   const mySubs = state.subscriptions.filter((s) => s.requested_by_user_id === state.currentUser?.user_id);
   const active = mySubs.filter((s) => s.status === 'active').length;
-  const pending = mySubs.filter((s) => s.status.includes('workflow') || s.status === 'provider_pending').length;
+  const pending = mySubs.filter((s) => isPendingSubscription(s.status)).length;
+
+  const subMap = useMemo(
+    () => buildUserSubscriptionMap(state.subscriptions, state.currentUser?.user_id),
+    [state.subscriptions, state.currentUser?.user_id],
+  );
 
   return (
     <div className="space-y-8">
@@ -55,7 +63,14 @@ export function ConsumerDashboard() {
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {visible.map((api) => <ApiCard key={api.api_id} api={api} />)}
+          {visible.map((api) => (
+            <ApiCard
+              key={api.api_id}
+              api={api}
+              subscription={subMap.get(api.api_id) ?? null}
+              domainName={getDomainName(api.domain_id)}
+            />
+          ))}
         </div>
       </div>
 

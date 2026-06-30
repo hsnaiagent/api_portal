@@ -5,7 +5,8 @@ import { useVisibleApis } from '@/hooks/useVisibleApis';
 import { ApiCard } from '@/components/shared/ApiCard';
 import { AIBadge } from '@/components/ai/AIBadge';
 import { matchesSearchIndex, getSearchMatchSummary } from '@/lib/search-index';
-import { domains } from '@/data/domains';
+import { domains, getDomainName } from '@/data/domains';
+import { buildUserSubscriptionMap } from '@/lib/subscriptions';
 import { CLASSIFICATIONS } from '@/config/classification';
 import type { CatalogFilters, Classification } from '@/types';
 
@@ -14,6 +15,11 @@ export function CatalogPage() {
   const visible = useVisibleApis(state.apis);
   const { query, domainFilter, classFilter, aiContext } = state.catalogFilters;
   const [searchContext, setSearchContext] = useState<string>();
+
+  const subMap = useMemo(
+    () => buildUserSubscriptionMap(state.subscriptions, state.currentUser?.user_id),
+    [state.subscriptions, state.currentUser?.user_id],
+  );
 
   const setFilters = (patch: Partial<CatalogFilters>) => {
     dispatch({ type: 'SET_CATALOG_FILTERS', payload: { ...state.catalogFilters, ...patch } });
@@ -89,7 +95,14 @@ export function CatalogPage() {
 
       <p className="text-sm text-slate-500">{filtered.length} APIs found</p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((api) => <ApiCard key={api.api_id} api={api} />)}
+        {filtered.map((api) => (
+          <ApiCard
+            key={api.api_id}
+            api={api}
+            subscription={subMap.get(api.api_id) ?? null}
+            domainName={getDomainName(api.domain_id)}
+          />
+        ))}
       </div>
     </div>
   );

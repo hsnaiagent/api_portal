@@ -9,6 +9,16 @@ export const domains: Domain[] = [
   { domain_id: 'dom_ai', name: 'AI Platform', code: 'ai', description: 'LLM, RAG, and MCP services' },
 ];
 
+const domainById = new Map(domains.map((d) => [d.domain_id, d]));
+
+export function getDomainById(id: string): Domain | undefined {
+  return domainById.get(id);
+}
+
+export function getDomainName(id: string): string | undefined {
+  return domainById.get(id)?.name;
+}
+
 export const teams: Team[] = [
   { team_id: 'team_hr_analytics', domain_id: 'dom_hr', name: 'HR Analytics' },
   { team_id: 'team_hr_ops', domain_id: 'dom_hr', name: 'HR Operations' },

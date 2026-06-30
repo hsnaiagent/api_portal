@@ -3,26 +3,18 @@ import { Link } from 'react-router-dom';
 import { FileKey, Search } from 'lucide-react';
 import { usePortal } from '@/store/AppStore';
 import { SubscriptionCard } from '@/components/shared/SubscriptionCard';
-import { domains } from '@/data/domains';
+import { domains, getDomainName } from '@/data/domains';
 import { ROUTES } from '@/config/routes';
+import { isPendingSubscription, isRejectedSubscription } from '@/lib/subscriptions';
 import type { SubscriptionStatus } from '@/types';
 
 type StatusFilter = 'all' | 'active' | 'pending' | 'rejected';
 
-const PENDING_STATUSES: SubscriptionStatus[] = [
-  'pending',
-  'workflow_in_progress',
-  'workflow_approved',
-  'provider_pending',
-];
-
-const REJECTED_STATUSES: SubscriptionStatus[] = ['workflow_rejected', 'revoked', 'expired'];
-
 function matchesStatusFilter(status: SubscriptionStatus, filter: StatusFilter): boolean {
   if (filter === 'all') return true;
   if (filter === 'active') return status === 'active';
-  if (filter === 'pending') return PENDING_STATUSES.includes(status);
-  if (filter === 'rejected') return REJECTED_STATUSES.includes(status);
+  if (filter === 'pending') return isPendingSubscription(status);
+  if (filter === 'rejected') return isRejectedSubscription(status);
   return true;
 }
 
@@ -36,16 +28,27 @@ export function SubscriptionsPage() {
   const mySubs = state.subscriptions.filter((s) => s.requested_by_user_id === state.currentUser?.user_id);
   const myApps = state.applications.filter((a) => a.owner_user_id === state.currentUser?.user_id);
 
+  // Pre-index reference collections so filtering/rendering is O(1) per row.
+  const apiById = useMemo(() => new Map(state.apis.map((a) => [a.api_id, a])), [state.apis]);
+  const appById = useMemo(
+    () => new Map(state.applications.map((a) => [a.application_id, a])),
+    [state.applications],
+  );
+  const credBySub = useMemo(
+    () => new Map(state.credentials.map((c) => [c.subscription_id, c])),
+    [state.credentials],
+  );
+
   const stats = useMemo(() => ({
     total: mySubs.length,
     active: mySubs.filter((s) => s.status === 'active').length,
-    pending: mySubs.filter((s) => PENDING_STATUSES.includes(s.status)).length,
-    rejected: mySubs.filter((s) => REJECTED_STATUSES.includes(s.status)).length,
+    pending: mySubs.filter((s) => isPendingSubscription(s.status)).length,
+    rejected: mySubs.filter((s) => isRejectedSubscription(s.status)).length,
   }), [mySubs]);
 
   const filtered = useMemo(() => {
     return mySubs.filter((sub) => {
-      const api = state.apis.find((a) => a.api_id === sub.api_id);
+      const api = apiById.get(sub.api_id);
       if (!api) return false;
 
       if (domainFilter && api.domain_id !== domainFilter) return false;
@@ -54,18 +57,18 @@ export function SubscriptionsPage() {
 
       if (query.trim()) {
         const q = query.toLowerCase();
-        const app = state.applications.find((a) => a.application_id === sub.application_id);
+        const app = appById.get(sub.application_id);
         return (
           api.name.toLowerCase().includes(q)
           || sub.purpose.toLowerCase().includes(q)
           || (app?.name.toLowerCase().includes(q) ?? false)
-          || domains.find((d) => d.domain_id === api.domain_id)?.name.toLowerCase().includes(q)
+          || (getDomainName(api.domain_id)?.toLowerCase().includes(q) ?? false)
         );
       }
 
       return true;
     });
-  }, [mySubs, state.apis, state.applications, query, statusFilter, domainFilter, appFilter]);
+  }, [mySubs, apiById, appById, query, statusFilter, domainFilter, appFilter]);
 
   const statusChips: { value: StatusFilter; label: string; count: number }[] = [
     { value: 'all', label: 'All', count: stats.total },
@@ -195,10 +198,11 @@ export function SubscriptionsPage() {
       ) : (
         <div className="grid gap-4">
           {filtered.map((sub) => {
-            const api = state.apis.find((a) => a.api_id === sub.api_id)!;
-            const application = state.applications.find((a) => a.application_id === sub.application_id);
-            const domainName = domains.find((d) => d.domain_id === api.domain_id)?.name;
-            const cred = state.credentials.find((c) => c.subscription_id === sub.subscription_id);
+            const api = apiById.get(sub.api_id);
+            if (!api) return null;
+            const application = appById.get(sub.application_id);
+            const domainName = getDomainName(api.domain_id);
+            const cred = credBySub.get(sub.subscription_id);
 
             return (
               <SubscriptionCard
