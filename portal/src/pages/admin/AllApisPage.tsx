@@ -3,6 +3,8 @@ import { usePortal } from '@/store/AppStore';
 import { ClassificationBadge } from '@/components/shared/ClassificationBadge';
 import { LifecycleBadge } from '@/components/shared/LifecycleBadge';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
+import { Pagination } from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import { domains } from '@/data/domains';
 import { CLASSIFICATIONS } from '@/config/classification';
 import { LIFECYCLE_LABELS } from '@/config/lifecycle';
@@ -29,6 +31,7 @@ export function AllApisPage() {
   }, [state.apis, query, domainFilter, statusFilter, classFilter]);
 
   const hasActiveFilters = Boolean(query || domainFilter || statusFilter || classFilter);
+  const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(filtered, 12);
 
   return (
     <div className="space-y-6">
@@ -67,7 +70,7 @@ export function AllApisPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50"><tr><th className="px-4 py-3 text-left">Name</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Class</th><th className="px-4 py-3">Actions</th></tr></thead>
           <tbody>
-            {filtered.map((api) => (
+            {pageItems.map((api) => (
               <tr key={api.api_id} className="border-t">
                 <td className="px-4 py-3 font-medium">{api.name}</td>
                 <td className="px-4 py-3"><LifecycleBadge status={api.lifecycle_status} /></td>
@@ -85,6 +88,15 @@ export function AllApisPage() {
           </tbody>
         </table>
       </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageStart={pageStart}
+        pageEnd={pageEnd}
+        onPageChange={setPage}
+        unit="APIs"
+      />
     </div>
   );
 }

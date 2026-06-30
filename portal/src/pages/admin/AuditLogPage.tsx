@@ -3,6 +3,8 @@ import { usePortal } from '@/store/AppStore';
 import { getAIResponse } from '@/mocks/AIAdapter';
 import { AuditLogTable } from '@/components/shared/AuditLogTable';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
+import { Pagination } from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import { AIBadge } from '@/components/ai/AIBadge';
 import { getUserById } from '@/data/users';
 
@@ -51,6 +53,7 @@ export function AuditLogPage() {
   }, [state.auditLogs, query, actionFilter, actorFilter]);
 
   const hasActiveFilters = Boolean(query || actionFilter || actorFilter);
+  const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(filtered, 15);
 
   return (
     <div className="space-y-6">
@@ -83,7 +86,16 @@ export function AuditLogPage() {
           <option value="system">System</option>
         </select>
       </ListFilterBar>
-      <AuditLogTable logs={filtered} />
+      <AuditLogTable logs={pageItems} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageStart={pageStart}
+        pageEnd={pageEnd}
+        onPageChange={setPage}
+        unit="entries"
+      />
       <button type="button" onClick={() => window.alert('Export simulated')} className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline">Export audit log (demo)</button>
     </div>
   );

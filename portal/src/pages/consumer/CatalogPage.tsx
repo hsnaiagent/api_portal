@@ -3,6 +3,8 @@ import { Search } from 'lucide-react';
 import { usePortal } from '@/store/AppStore';
 import { useVisibleApis } from '@/hooks/useVisibleApis';
 import { ApiCard } from '@/components/shared/ApiCard';
+import { Pagination } from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import { AIBadge } from '@/components/ai/AIBadge';
 import { matchesSearchIndex, getSearchMatchSummary } from '@/lib/search-index';
 import { domains, getDomainName } from '@/data/domains';
@@ -53,6 +55,7 @@ export function CatalogPage() {
   }, [visible, query, domainFilter, classFilter]);
 
   const contextMessage = searchContext ?? aiContext;
+  const { page, setPage, pageItems, totalPages, total, pageStart, pageEnd } = usePagination(filtered, 12);
 
   return (
     <div className="space-y-6">
@@ -95,7 +98,7 @@ export function CatalogPage() {
 
       <p className="text-sm text-slate-500">{filtered.length} APIs found</p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((api) => (
+        {pageItems.map((api) => (
           <ApiCard
             key={api.api_id}
             api={api}
@@ -104,6 +107,15 @@ export function CatalogPage() {
           />
         ))}
       </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageStart={pageStart}
+        pageEnd={pageEnd}
+        onPageChange={setPage}
+        unit="APIs"
+      />
     </div>
   );
 }
