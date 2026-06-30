@@ -56,6 +56,22 @@ import { AuditLogPage } from '@/pages/admin/AuditLogPage';
 
 import { ROUTES } from '@/config/routes';
 
+import { usePortal } from '@/store/AppStore';
+
+import { roleLandingPath } from '@/lib/navigation';
+
+
+
+function RootRedirect() {
+
+  const { state } = usePortal();
+
+  if (!state.currentUser) return <Navigate to={ROUTES.login} replace />;
+
+  return <Navigate to={roleLandingPath(state.activeRole)} replace />;
+
+}
+
 
 
 export default function App() {
@@ -72,7 +88,7 @@ export default function App() {
 
           <Route element={<AppShell />}>
 
-            <Route path="/" element={<Navigate to={ROUTES.login} replace />} />
+            <Route path="/" element={<RootRedirect />} />
 
             <Route path={ROUTES.consumer.dashboard} element={<ConsumerDashboard />} />
 

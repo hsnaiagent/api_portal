@@ -8,6 +8,10 @@ import { LIFECYCLE_TRANSITIONS, LIFECYCLE_LABELS } from '@/config/lifecycle';
 
 import { LifecycleBadge } from '@/components/shared/LifecycleBadge';
 
+import { NotFound } from '@/components/shared/NotFound';
+
+import { ROUTES } from '@/config/routes';
+
 import type { LifecycleStatus } from '@/types';
 
 
@@ -24,7 +28,15 @@ export function LLMApiManageDetailPage() {
 
 
 
-  if (!api) return <p>LLM API not found</p>;
+  if (!api)
+    return (
+      <NotFound
+        title="LLM API not found"
+        message="This LLM API does not exist or is not part of the AI Platform domain."
+        to={ROUTES.llmAdmin.myApis}
+        actionLabel="Back to My LLM APIs"
+      />
+    );
 
 
 

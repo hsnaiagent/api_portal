@@ -2,6 +2,8 @@ import { useParams } from 'react-router-dom';
 import { usePortal } from '@/store/AppStore';
 import { LIFECYCLE_TRANSITIONS, LIFECYCLE_LABELS } from '@/config/lifecycle';
 import { LifecycleBadge } from '@/components/shared/LifecycleBadge';
+import { NotFound } from '@/components/shared/NotFound';
+import { ROUTES } from '@/config/routes';
 import type { LifecycleStatus } from '@/types';
 
 export function ApiManagePage() {
@@ -10,7 +12,15 @@ export function ApiManagePage() {
   const api = state.apis.find((a) => a.api_id === id);
   const role = state.activeRole;
 
-  if (!api) return <p>Not found</p>;
+  if (!api)
+    return (
+      <NotFound
+        title="API not found"
+        message="This API does not exist or you no longer manage it."
+        to={ROUTES.provider.myApis}
+        actionLabel="Back to My APIs"
+      />
+    );
 
   const transitions = LIFECYCLE_TRANSITIONS[api.lifecycle_status];
   const canTransition = transitions?.allowedRoles.includes(role ?? 'developer');

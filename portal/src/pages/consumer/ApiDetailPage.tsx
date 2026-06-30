@@ -38,6 +38,8 @@ import type { LLMSubscriptionRequest, Subscription } from '@/types';
 
 import { AIBadge } from '@/components/ai/AIBadge';
 
+import { NotFound } from '@/components/shared/NotFound';
+
 
 
 export function ApiDetailPage() {
@@ -64,7 +66,15 @@ export function ApiDetailPage() {
 
 
 
-  if (!api) return <p>API not found</p>;
+  if (!api)
+    return (
+      <NotFound
+        title="API not found"
+        message="This API does not exist or is no longer available in the catalog."
+        to={ROUTES.consumer.catalog}
+        actionLabel="Back to catalog"
+      />
+    );
 
 
 

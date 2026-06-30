@@ -12,6 +12,8 @@ import { domains } from '@/data/domains';
 
 import { ROUTES } from '@/config/routes';
 
+import { roleLandingPath } from '@/lib/navigation';
+
 import type { PortalRole } from '@/types';
 
 
@@ -25,18 +27,6 @@ const roleLabels: Record<PortalRole, string> = {
   portal_admin: 'Portal Admin',
 
 };
-
-
-
-function getHomeRoute(role: PortalRole) {
-
-  if (role === 'portal_admin') return ROUTES.admin.dashboard;
-
-  if (role === 'llm_admin') return ROUTES.llmAdmin.dashboard;
-
-  return ROUTES.consumer.dashboard;
-
-}
 
 
 
@@ -56,7 +46,7 @@ export function RoleSwitcher() {
 
     dispatch({ type: 'LOGIN', payload: { user: u, role: u.portal_roles[0] } });
 
-    navigate(getHomeRoute(u.portal_roles[0]));
+    navigate(roleLandingPath(u.portal_roles[0]));
 
   };
 
