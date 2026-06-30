@@ -58,3 +58,16 @@ export function buildUserSubscriptionMap(
 export function isBlockingSubscription(status: SubscriptionStatus): boolean {
   return BLOCKING_STATUSES.includes(status);
 }
+
+/**
+ * Whether a subscription is awaiting a provider's accept/reject decision.
+ * Shared by the provider dashboard and the Consumer Requests queue so their
+ * pending counts always agree.
+ */
+export function isProviderActionable(sub: Subscription): boolean {
+  return (
+    sub.status === 'provider_pending' ||
+    sub.status === 'workflow_approved' ||
+    (sub.status === 'workflow_in_progress' && sub.provider_status === 'pending')
+  );
+}

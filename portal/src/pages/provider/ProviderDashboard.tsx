@@ -6,6 +6,8 @@ import { usePortal } from '@/store/AppStore';
 
 import { getManagedApis } from '@/lib/roles';
 
+import { isProviderActionable } from '@/lib/subscriptions';
+
 
 
 export function ProviderDashboard() {
@@ -14,9 +16,11 @@ export function ProviderDashboard() {
 
   const myApis = getManagedApis(state.apis, state.currentUser, state.activeRole);
 
+  const myApiIds = new Set(myApis.map((a) => a.api_id));
+
   const pending = state.subscriptions.filter(
 
-    (s) => myApis.some((a) => a.api_id === s.api_id) && s.provider_status === 'pending' && s.status !== 'workflow_rejected',
+    (s) => myApiIds.has(s.api_id) && isProviderActionable(s),
 
   );
 

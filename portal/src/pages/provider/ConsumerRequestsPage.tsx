@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { usePortal } from '@/store/AppStore';
 import { getManagedApis } from '@/lib/roles';
+import { isProviderActionable } from '@/lib/subscriptions';
 import { provisionSubscription } from '@/mocks/GatewayAdapter';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
 import { useNotify } from '@/hooks/useNotify';
@@ -11,9 +12,9 @@ export function ConsumerRequestsPage() {
   const [query, setQuery] = useState('');
 
   const myApis = getManagedApis(state.apis, state.currentUser, state.activeRole);
-  const myApiIds = myApis.map((a) => a.api_id);
+  const myApiIds = new Set(myApis.map((a) => a.api_id));
   const pending = state.subscriptions.filter(
-    (s) => myApiIds.includes(s.api_id) && (s.status === 'provider_pending' || s.status === 'workflow_approved' || (s.status === 'workflow_in_progress' && s.provider_status === 'pending')),
+    (s) => myApiIds.has(s.api_id) && isProviderActionable(s),
   );
 
   const filtered = useMemo(() => {
