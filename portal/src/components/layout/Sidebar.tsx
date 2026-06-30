@@ -38,6 +38,8 @@ import {
 
   Brain,
 
+  Boxes,
+
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -129,6 +131,8 @@ const portalAdminNav: NavItem[] = [
   { to: ROUTES.admin.providerRequests, label: 'Provider Access Requests', icon: KeyRound },
 
   { to: ROUTES.admin.rbac, label: 'RBAC', icon: Shield },
+
+  { to: ROUTES.admin.domains, label: 'Domain Registry', icon: Boxes },
 
   { to: ROUTES.admin.audit, label: 'Audit Log', icon: Activity },
 

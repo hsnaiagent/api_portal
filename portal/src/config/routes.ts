@@ -74,6 +74,8 @@ export const ROUTES = {
 
     rbac: '/admin/rbac',
 
+    domains: '/admin/domains',
+
     audit: '/admin/audit',
 
   },

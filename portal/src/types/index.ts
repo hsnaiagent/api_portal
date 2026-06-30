@@ -454,6 +454,10 @@ export interface PortalState {
 
   activeRole: PortalRole | null;
 
+  users: User[];
+
+  domains: Domain[];
+
   apis: API[];
 
   subscriptions: Subscription[];

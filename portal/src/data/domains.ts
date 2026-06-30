@@ -9,6 +9,8 @@ export const domains: Domain[] = [
   { domain_id: 'dom_ai', name: 'AI Platform', code: 'ai', description: 'LLM, RAG, and MCP services' },
 ];
 
+export const initialDomains = domains;
+
 const domainById = new Map(domains.map((d) => [d.domain_id, d]));
 
 export function getDomainById(id: string): Domain | undefined {

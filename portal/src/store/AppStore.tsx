@@ -10,6 +10,8 @@ import {
 } from 'react';
 
 import { initialApis } from '@/data/apis';
+import { initialUsers } from '@/data/users';
+import { initialDomains } from '@/data/domains';
 import { initialApplications } from '@/data/applications';
 import { initialAuditLogs } from '@/data/audit-log';
 import { initialCredentials } from '@/data/credentials';
@@ -46,6 +48,8 @@ interface PortalContextValue {
 const PortalContext = createContext<PortalContextValue | null>(null);
 
 const seedData: PersistedPortalData = {
+  users: initialUsers,
+  domains: initialDomains,
   apis: initialApis,
   subscriptions: initialSubscriptions,
   applications: initialApplications,
@@ -70,6 +74,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const persistedSnapshot = useMemo(
     () => extractPersistedData(state),
     [
+      state.users,
+      state.domains,
       state.apis,
       state.subscriptions,
       state.applications,

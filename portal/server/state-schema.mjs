@@ -2,6 +2,8 @@
 // Mirrored on the client in src/store/schema.ts — keep both in sync.
 
 export const COLLECTION_ID_FIELDS = {
+  users: 'user_id',
+  domains: 'domain_id',
   apis: 'api_id',
   subscriptions: 'subscription_id',
   applications: 'application_id',

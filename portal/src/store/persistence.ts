@@ -3,10 +3,12 @@ import type {
   Application,
   AuditLog,
   Credential,
+  Domain,
   LLMSubscriptionRequest,
   PortalState,
   ProviderAccessRequest,
   Subscription,
+  User,
   WorkflowInstance,
 } from '@/types';
 import { SEED_VERSION } from '@/config/seed';
@@ -16,6 +18,8 @@ export const PERSIST_POLL_MS = 3000;
 export const PERSIST_SAVE_DEBOUNCE_MS = 600;
 
 export interface PersistedPortalData {
+  users: User[];
+  domains: Domain[];
   apis: API[];
   subscriptions: Subscription[];
   applications: Application[];
@@ -44,6 +48,8 @@ export class RevisionConflictError extends Error {
 
 export function extractPersistedData(state: PortalState): PersistedPortalData {
   return {
+    users: state.users,
+    domains: state.domains,
     apis: state.apis,
     subscriptions: state.subscriptions,
     applications: state.applications,

@@ -10,6 +10,8 @@ import type {
 
   Credential,
 
+  Domain,
+
   LLMSubscriptionRequest,
 
   Notification,
@@ -35,6 +37,10 @@ export type PortalAction =
       type: 'INIT_DATA';
 
       payload: {
+
+        users?: User[];
+
+        domains?: Domain[];
 
         apis: API[];
 
@@ -91,6 +97,14 @@ export type PortalAction =
   | { type: 'UPDATE_PROVIDER_REQUEST'; payload: { request_id: string; patch: Partial<ProviderAccessRequest> } }
 
   | { type: 'GRANT_PROVIDER_DOMAIN'; payload: { user_id: string; domain_id: string } }
+
+  | { type: 'UPDATE_USER'; payload: { user_id: string; patch: Partial<User> } }
+
+  | { type: 'ADD_DOMAIN'; payload: Domain }
+
+  | { type: 'UPDATE_DOMAIN'; payload: { domain_id: string; patch: Partial<Domain> } }
+
+  | { type: 'DELETE_DOMAIN'; payload: string }
 
   | { type: 'ADD_LLM_REQUEST'; payload: LLMSubscriptionRequest }
 

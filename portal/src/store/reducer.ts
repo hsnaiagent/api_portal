@@ -14,6 +14,10 @@ export const initialState: PortalState = {
 
   activeRole: null,
 
+  users: [],
+
+  domains: [],
+
   apis: [],
 
   subscriptions: [],
@@ -46,6 +50,10 @@ function preserveData(state: PortalState): Partial<PortalState> {
 
   return {
 
+    users: state.users,
+
+    domains: state.domains,
+
     apis: state.apis,
 
     subscriptions: state.subscriptions,
@@ -74,7 +82,17 @@ export function portalReducer(state: PortalState, action: PortalAction): PortalS
 
     case 'INIT_DATA':
 
-      return { ...state, ...action.payload };
+      return {
+
+        ...state,
+
+        ...action.payload,
+
+        users: action.payload.users ?? state.users,
+
+        domains: action.payload.domains ?? state.domains,
+
+      };
 
     case 'LOGIN':
 
@@ -238,9 +256,63 @@ export function portalReducer(state: PortalState, action: PortalAction): PortalS
 
         currentUser: updatedUser,
 
+        users: state.users.map((u) =>
+
+          u.user_id === user_id && !u.provider_domains.includes(domain_id)
+
+            ? { ...u, provider_domains: [...u.provider_domains, domain_id] }
+
+            : u,
+
+        ),
+
       };
 
     }
+
+    case 'UPDATE_USER':
+
+      return {
+
+        ...state,
+
+        users: state.users.map((u) =>
+
+          u.user_id === action.payload.user_id ? { ...u, ...action.payload.patch } : u,
+
+        ),
+
+        currentUser:
+
+          state.currentUser?.user_id === action.payload.user_id
+
+            ? { ...state.currentUser, ...action.payload.patch }
+
+            : state.currentUser,
+
+      };
+
+    case 'ADD_DOMAIN':
+
+      return { ...state, domains: [...state.domains, action.payload] };
+
+    case 'UPDATE_DOMAIN':
+
+      return {
+
+        ...state,
+
+        domains: state.domains.map((d) =>
+
+          d.domain_id === action.payload.domain_id ? { ...d, ...action.payload.patch } : d,
+
+        ),
+
+      };
+
+    case 'DELETE_DOMAIN':
+
+      return { ...state, domains: state.domains.filter((d) => d.domain_id !== action.payload) };
 
     case 'ADD_LLM_REQUEST':
 

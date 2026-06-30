@@ -98,6 +98,8 @@ export const users: User[] = [
 
 
 
+export const initialUsers = users;
+
 export function getUserById(id: string) {
 
   return users.find((u) => u.user_id === id);

@@ -34,6 +34,7 @@ const AllApisPage = lazy(() => named(import('@/pages/admin/AllApisPage'), 'AllAp
 const ProviderAccessQueuePage = lazy(() => named(import('@/pages/admin/ProviderAccessQueuePage'), 'ProviderAccessQueuePage'));
 const RBACPage = lazy(() => named(import('@/pages/admin/RBACPage'), 'RBACPage'));
 const AuditLogPage = lazy(() => named(import('@/pages/admin/AuditLogPage'), 'AuditLogPage'));
+const DomainsPage = lazy(() => named(import('@/pages/admin/DomainsPage'), 'DomainsPage'));
 
 function RootRedirect() {
   const { state } = usePortal();
@@ -87,6 +88,7 @@ export default function App() {
               <Route path={ROUTES.admin.allApis} element={<AllApisPage />} />
               <Route path={ROUTES.admin.providerRequests} element={<ProviderAccessQueuePage />} />
               <Route path={ROUTES.admin.rbac} element={<RBACPage />} />
+              <Route path={ROUTES.admin.domains} element={<DomainsPage />} />
               <Route path={ROUTES.admin.audit} element={<AuditLogPage />} />
             </Route>
           </Route>
