@@ -40,6 +40,6 @@ export const initialAuditLogs: AuditLog[] = [
 
   { audit_id: 'aud_015', timestamp: daysAgo(4.5), actor_user_id: 'user_murad', actor_type: 'user', action: 'subscription.provider_accepted', entity_type: 'subscription', entity_id: 'sub_008', payload: {} },
 
-  { audit_id: 'aud_016', timestamp: daysAgo(3.5), actor_user_id: 'user_portal_admin', actor_type: 'user', action: 'provider_access.rejected', entity_type: 'user', entity_id: 'user_ali', payload: { domain_id: 'dom_proc' } },
+  { audit_id: 'aud_016', timestamp: daysAgo(3.5), actor_user_id: 'user_portal_admin', actor_type: 'user', action: 'provider_access.rejected', entity_type: 'user', entity_id: 'user_ali', payload: { domain_id: 'dom_sales' } },
 
 ];

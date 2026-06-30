@@ -37,4 +37,13 @@ export const initialProviderAccessRequests: ProviderAccessRequest[] = [
     created_at: '2026-06-20T14:00:00Z',
     reviewed_at: '2026-06-21T10:00:00Z',
   },
+  {
+    request_id: 'par_005',
+    user_id: 'user_ali',
+    domain_id: 'dom_sales',
+    justification:
+      'Re-submitting with our data-governance plan attached: classification review, owner sign-off, and quarterly access audit for all Sales APIs we intend to publish.',
+    status: 'pending',
+    created_at: '2026-06-28T09:30:00Z',
+  },
 ];
