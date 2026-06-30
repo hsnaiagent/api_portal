@@ -62,6 +62,8 @@ export function ApiDetailPage() {
 
   const [aiPurposeLoading, setAiPurposeLoading] = useState(false);
 
+  const [submitting, setSubmitting] = useState(false);
+
   const [recommendations, setRecommendations] = useState<{ id: string; label: string; reason?: string }[]>([]);
 
 
@@ -134,6 +136,8 @@ export function ApiDetailPage() {
 
   const requestStandardAccess = async () => {
 
+    if (!state.currentUser || !appId) return;
+
     const newSub: Subscription = {
 
       subscription_id: `sub_${Date.now()}`,
@@ -142,7 +146,7 @@ export function ApiDetailPage() {
 
       application_id: appId,
 
-      requested_by_user_id: state.currentUser!.user_id,
+      requested_by_user_id: state.currentUser.user_id,
 
       purpose,
 
@@ -156,29 +160,45 @@ export function ApiDetailPage() {
 
     };
 
-    dispatch({ type: 'ADD_SUBSCRIPTION', payload: newSub });
+    setSubmitting(true);
 
-    if (api.classification !== 'public') {
+    try {
 
-      await triggerWorkflow(newSub);
+      dispatch({ type: 'ADD_SUBSCRIPTION', payload: newSub });
 
-      notify('Workflow started', `Approval workflow triggered for ${api.name}`, 'info');
+      if (api.classification !== 'public') {
 
-    } else {
+        await triggerWorkflow(newSub);
 
-      await provisionSubscription(newSub);
+        notify('Workflow started', `Approval workflow triggered for ${api.name}`, 'info');
 
-      notify('Access granted', `Self-service subscription active for ${api.name}`, 'success');
+      } else {
+
+        await provisionSubscription(newSub);
+
+        notify('Access granted', `Self-service subscription active for ${api.name}`, 'success');
+
+      }
+
+      setShowSubModal(false);
+
+    } catch {
+
+      notify('Request failed', 'Could not complete the subscription request. Please try again.', 'error');
+
+    } finally {
+
+      setSubmitting(false);
 
     }
-
-    setShowSubModal(false);
 
   };
 
 
 
   const requestLlmAccess = async () => {
+
+    if (!state.currentUser || !appId) return;
 
     const subscriptionId = `sub_${Date.now()}`;
 
@@ -190,7 +210,7 @@ export function ApiDetailPage() {
 
       application_id: appId,
 
-      requested_by_user_id: state.currentUser!.user_id,
+      requested_by_user_id: state.currentUser.user_id,
 
       purpose: llmForm.task_description,
 
@@ -212,7 +232,7 @@ export function ApiDetailPage() {
 
       api_id: api.api_id,
 
-      requested_by_user_id: state.currentUser!.user_id,
+      requested_by_user_id: state.currentUser.user_id,
 
       application_id: appId,
 
@@ -224,41 +244,55 @@ export function ApiDetailPage() {
 
     };
 
-    dispatch({ type: 'ADD_SUBSCRIPTION', payload: newSub });
+    setSubmitting(true);
 
-    dispatch({ type: 'ADD_LLM_REQUEST', payload: llmRequest });
+    try {
 
-    dispatch({
+      dispatch({ type: 'ADD_SUBSCRIPTION', payload: newSub });
 
-      type: 'ADD_AUDIT',
+      dispatch({ type: 'ADD_LLM_REQUEST', payload: llmRequest });
 
-      payload: {
+      dispatch({
 
-        audit_id: `aud_${Date.now()}`,
+        type: 'ADD_AUDIT',
 
-        timestamp: new Date().toISOString(),
+        payload: {
 
-        actor_user_id: state.currentUser!.user_id,
+          audit_id: `aud_${Date.now()}`,
 
-        actor_type: 'user',
+          timestamp: new Date().toISOString(),
 
-        action: 'llm_access.requested',
+          actor_user_id: state.currentUser.user_id,
 
-        entity_type: 'llm_request',
+          actor_type: 'user',
 
-        entity_id: llmRequest.llm_request_id,
+          action: 'llm_access.requested',
 
-        payload: { api_id: api.api_id, use_case_name: llmForm.use_case_name },
+          entity_type: 'llm_request',
 
-      },
+          entity_id: llmRequest.llm_request_id,
 
-    });
+          payload: { api_id: api.api_id, use_case_name: llmForm.use_case_name },
 
-    notify('LLM access requested', 'LLM Admin will review your ROI justification.', 'info');
+        },
 
-    setShowSubModal(false);
+      });
 
-    setLlmForm(emptyLlmForm);
+      notify('LLM access requested', 'LLM Admin will review your ROI justification.', 'info');
+
+      setShowSubModal(false);
+
+      setLlmForm(emptyLlmForm);
+
+    } catch {
+
+      notify('Request failed', 'Could not submit the LLM access request. Please try again.', 'error');
+
+    } finally {
+
+      setSubmitting(false);
+
+    }
 
   };
 
@@ -448,39 +482,17 @@ export function ApiDetailPage() {
 
               <h2 className="text-lg font-bold">{isLlm ? 'Request LLM API Access' : 'Request Subscription'}</h2>
 
-              <div>
-
-                <label className="block text-sm font-medium mb-1">Application</label>
-
-                <select value={appId} onChange={(e) => setAppId(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm">
-
-                  {myApps.map((a) => <option key={a.application_id} value={a.application_id}>{a.name}</option>)}
-
-                </select>
-
-              </div>
-
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
-
-              {isLlm ? (
-
-                <LLMSubscriptionForm value={llmForm} onChange={setLlmForm} />
-
-              ) : (
+              {myApps.length > 0 && (
 
                 <div>
 
-                  <div className="flex justify-between mb-1">
+                  <label htmlFor="sub-app" className="block text-sm font-medium mb-1">Application</label>
 
-                    <label className="text-sm font-medium">Purpose (required)</label>
+                  <select id="sub-app" value={appId} onChange={(e) => setAppId(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm">
 
-                    <button type="button" onClick={draftPurpose} disabled={aiPurposeLoading} className="text-xs text-brand-blue">AI-3 Help me write this</button>
+                    {myApps.map((a) => <option key={a.application_id} value={a.application_id}>{a.name}</option>)}
 
-                  </div>
-
-                  <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={4} className="w-full rounded-lg border px-3 py-2 text-sm" />
+                  </select>
 
                 </div>
 
@@ -488,25 +500,85 @@ export function ApiDetailPage() {
 
             </div>
 
+            {myApps.length === 0 ? (
+
+              <div className="flex-1 overflow-y-auto px-6 py-8 min-h-0 text-center space-y-3">
+
+                <p className="font-medium text-slate-700">You need an application first</p>
+
+                <p className="text-sm text-slate-500 max-w-sm mx-auto">
+
+                  Subscriptions are tied to a consumer application. Create one, then come back to request access.
+
+                </p>
+
+                <Link
+
+                  to={ROUTES.consumer.applications}
+
+                  className="inline-block rounded-lg bg-brand-green px-4 py-2 text-sm font-medium text-brand-white hover:bg-brand-green-dark"
+
+                >
+
+                  Create an application
+
+                </Link>
+
+              </div>
+
+            ) : (
+
+              <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+
+                {isLlm ? (
+
+                  <LLMSubscriptionForm value={llmForm} onChange={setLlmForm} />
+
+                ) : (
+
+                  <div>
+
+                    <div className="flex justify-between mb-1">
+
+                      <label htmlFor="sub-purpose" className="text-sm font-medium">Purpose (required)</label>
+
+                      <button type="button" onClick={draftPurpose} disabled={aiPurposeLoading} className="text-xs text-brand-blue disabled:opacity-50">{aiPurposeLoading ? 'Drafting…' : 'AI-3 Help me write this'}</button>
+
+                    </div>
+
+                    <textarea id="sub-purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={4} className="w-full rounded-lg border px-3 py-2 text-sm" />
+
+                  </div>
+
+                )}
+
+              </div>
+
+            )}
+
             <div className="flex-shrink-0 px-6 py-4 border-t border-slate-100 flex gap-2 justify-end">
 
-              <button type="button" onClick={() => setShowSubModal(false)} className="px-4 py-2 text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowSubModal(false)} className="px-4 py-2 text-sm">{myApps.length === 0 ? 'Close' : 'Cancel'}</button>
 
-              <button
+              {myApps.length > 0 && (
 
-                type="button"
+                <button
 
-                onClick={isLlm ? requestLlmAccess : requestStandardAccess}
+                  type="button"
 
-                disabled={isLlm ? !isLlmFormComplete(llmForm) || !appId : !purpose || !appId}
+                  onClick={isLlm ? requestLlmAccess : requestStandardAccess}
 
-                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+                  disabled={submitting || (isLlm ? !isLlmFormComplete(llmForm) || !appId : !purpose || !appId)}
 
-              >
+                  className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
 
-                Submit
+                >
 
-              </button>
+                  {submitting ? 'Submitting…' : 'Submit'}
+
+                </button>
+
+              )}
 
             </div>
 
