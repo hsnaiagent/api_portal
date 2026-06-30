@@ -32,10 +32,18 @@ export function ApplicationPlanner() {
     setAiText(undefined);
     setBundle([]);
     dispatch({ type: 'SET_PLANNER', payload: { description } });
-    const res = await getAIResponse('AI_1_ApplicationPlanner', { description });
-    setAiText(res?.text);
-    setBundle(res?.items ?? []);
-    setLoading(false);
+    try {
+      const res = await getAIResponse('AI_1_ApplicationPlanner', { description });
+      setAiText(res?.text);
+      setBundle(res?.items ?? []);
+      if (!res?.items?.length) {
+        notify('No matches found', 'The planner could not map your description to catalog APIs. Try adding more detail.', 'warning');
+      }
+    } catch {
+      notify('Planner failed', 'Could not analyze your description. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggle = (id: string) => {
@@ -48,7 +56,10 @@ export function ApplicationPlanner() {
 
   const requestBundle = () => {
     const app = state.applications.find((a) => a.owner_user_id === state.currentUser?.user_id);
-    if (!app) return;
+    if (!app) {
+      notify('No application found', 'Create an application before requesting API access.', 'warning');
+      return;
+    }
     selected.forEach((apiId) => {
       const api = state.apis.find((a) => a.api_id === apiId)!;
       const sub: Subscription = {
@@ -127,10 +138,10 @@ export function ApplicationPlanner() {
         </>
       )}
 
-      {previewApi && (
+      {previewApi && app && (
         <div className="rounded-xl border border-slate-200 bg-brand-white p-6">
           <h3 className="font-semibold mb-4">SDK Preview: {previewApi.name}</h3>
-          <SDKPanel api={previewApi} application={{ ...app!, application_description: description }} />
+          <SDKPanel api={previewApi} application={{ ...app, application_description: description }} />
         </div>
       )}
 
