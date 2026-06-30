@@ -78,7 +78,7 @@ export function MyApisPage() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No APIs match your filters.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">{myApis.length === 0 ? "You haven't registered any APIs yet." : 'No APIs match your filters.'}</td></tr>
             )}
           </tbody>
         </table>

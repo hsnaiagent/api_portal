@@ -83,7 +83,7 @@ export function AllApisPage() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No APIs match your filters.</td></tr>
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">{state.apis.length === 0 ? 'No APIs in the catalog yet.' : 'No APIs match your filters.'}</td></tr>
             )}
           </tbody>
         </table>

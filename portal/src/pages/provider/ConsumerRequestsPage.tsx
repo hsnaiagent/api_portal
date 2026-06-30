@@ -54,7 +54,9 @@ export function ConsumerRequestsPage() {
         onClear={() => setQuery('')}
         resultLabel={`${filtered.length} of ${pending.length} pending requests`}
       />
-      {filtered.length === 0 && <p className="text-slate-500">No pending requests match your filters.</p>}
+      {filtered.length === 0 && (
+        <p className="text-slate-500">{pending.length === 0 ? 'No pending consumer requests right now.' : 'No requests match your filters.'}</p>
+      )}
       {filtered.map((sub) => {
         const api = state.apis.find((a) => a.api_id === sub.api_id);
         const app = state.applications.find((a) => a.application_id === sub.application_id);

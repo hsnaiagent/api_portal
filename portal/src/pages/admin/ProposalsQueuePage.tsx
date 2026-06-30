@@ -78,7 +78,9 @@ export function ProposalsQueuePage() {
           </div>
         </div>
       ))}
-      {filtered.length === 0 && <p className="text-slate-500">No proposals match your filters.</p>}
+      {filtered.length === 0 && (
+        <p className="text-slate-500">{proposed.length === 0 ? 'No proposals are awaiting review.' : 'No proposals match your filters.'}</p>
+      )}
     </div>
   );
 }

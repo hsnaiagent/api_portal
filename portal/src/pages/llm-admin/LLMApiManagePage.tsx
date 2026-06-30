@@ -89,7 +89,7 @@ export function LLMApiManagePage() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No APIs match your filters.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">{llmApis.length === 0 ? 'No LLM APIs registered yet.' : 'No APIs match your filters.'}</td></tr>
             )}
           </tbody>
         </table>

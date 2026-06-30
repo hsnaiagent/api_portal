@@ -62,16 +62,22 @@ export function ConsumerDashboard() {
             <Search className="h-4 w-4" /> Browse catalog
           </Link>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {visible.map((api) => (
-            <ApiCard
-              key={api.api_id}
-              api={api}
-              subscription={subMap.get(api.api_id) ?? null}
-              domainName={getDomainName(api.domain_id)}
-            />
-          ))}
-        </div>
+        {visible.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-slate-500">
+            No published APIs are available to you yet.
+          </p>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {visible.map((api) => (
+              <ApiCard
+                key={api.api_id}
+                api={api}
+                subscription={subMap.get(api.api_id) ?? null}
+                domainName={getDomainName(api.domain_id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <Link to={ROUTES.consumer.subscriptions} className="flex items-center gap-2 text-sm text-brand-blue hover:text-brand-blue-dark hover:underline">

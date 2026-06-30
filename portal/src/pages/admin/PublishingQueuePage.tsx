@@ -57,7 +57,9 @@ export function PublishingQueuePage() {
           </div>
         </div>
       ))}
-      {filtered.length === 0 && <p className="text-slate-500">No APIs match your filters.</p>}
+      {filtered.length === 0 && (
+        <p className="text-slate-500">{testing.length === 0 ? 'No APIs are awaiting publish.' : 'No APIs match your filters.'}</p>
+      )}
     </div>
   );
 }
