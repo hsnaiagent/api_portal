@@ -31,7 +31,7 @@ const developers: {
     userId: 'user_developer',
     role: 'developer',
     title: 'Ahmad Al-Rashidi',
-    description: 'HR API publisher · owns HR & Procurement APIs',
+    description: 'HR API publisher · owns HR APIs',
     accent: 'border-brand-green hover:bg-brand-green-light/30',
     icon: Code2,
     iconBg: 'bg-brand-green-light text-brand-green',

@@ -104,7 +104,7 @@ export function ProviderAccessRequestPage() {
           </p>
         ) : hasPending ? (
           <p className="text-sm text-amber-700">
-            A request for {domainName} is already pending review.
+            A request is already pending review.
           </p>
         ) : (
           <>
