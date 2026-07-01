@@ -1,11 +1,34 @@
 import express from 'express';
 import fs from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { emptyEnvelope, normalizeData, validateData } from './state-schema.mjs';
+import { registerGeminiRoutes } from './gemini-routes.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function loadDotEnv() {
+  const envPath = path.join(__dirname, '..', '.env');
+  if (!existsSync(envPath)) return;
+  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith("'") && value.endsWith("'"))
+      || (value.startsWith('"') && value.endsWith('"'))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+loadDotEnv();
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'portal-state.json');
 const TMP_FILE = `${DATA_FILE}.tmp`;
@@ -109,6 +132,8 @@ app.get('/api/state', async (_req, res) => {
   res.setHeader(POLL_HEADER, String(envelope._revision ?? 0));
   res.json(envelope);
 });
+
+registerGeminiRoutes(app);
 
 app.put('/api/state', async (req, res) => {
   if (!req.body?.data) {

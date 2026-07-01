@@ -1,49 +1,52 @@
 import { AI_CONFIG, type AIAgentId } from '@/config/ai';
 import type { AIResponse, ApiSearchIndex, Classification } from '@/types';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+let geminiStatusCache: { configured: boolean; checkedAt: number } | null = null;
 
-export function isGeminiConfigured(): boolean {
-  return Boolean(GEMINI_API_KEY?.trim());
+async function fetchGeminiStatus(): Promise<boolean> {
+  if (geminiStatusCache && Date.now() - geminiStatusCache.checkedAt < 30_000) {
+    return geminiStatusCache.configured;
+  }
+
+  try {
+    const response = await fetch('/api/gemini/status', { cache: 'no-store' });
+    if (!response.ok) {
+      geminiStatusCache = { configured: false, checkedAt: Date.now() };
+      return false;
+    }
+    const data = (await response.json()) as { configured?: boolean };
+    geminiStatusCache = { configured: Boolean(data.configured), checkedAt: Date.now() };
+    return geminiStatusCache.configured;
+  } catch {
+    geminiStatusCache = { configured: false, checkedAt: Date.now() };
+    return false;
+  }
 }
 
-interface GeminiGenerateContentResponse {
-  candidates?: {
-    content?: {
-      parts?: { text?: string }[];
-    };
-  }[];
-  error?: { message?: string };
+export async function isGeminiConfigured(): Promise<boolean> {
+  return fetchGeminiStatus();
 }
 
 async function callGemini(prompt: string, jsonMode = true): Promise<string | null> {
-  if (!isGeminiConfigured()) return null;
+  try {
+    const response = await fetch('/api/gemini/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, jsonMode, model: AI_CONFIG.geminiModel }),
+    });
 
-  const model = AI_CONFIG.geminiModel;
-  const url = `${GEMINI_BASE}/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.warn('[gemini] proxy request failed', response.status, errorBody);
+      return null;
+    }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: jsonMode ? { responseMimeType: 'application/json' } : undefined,
-    }),
-  });
-
-  if (!response.ok) {
-    console.warn('[gemini] request failed', response.status, await response.text());
+    const data = (await response.json()) as { text?: string };
+    return data.text ?? null;
+  } catch (error) {
+    console.warn('[gemini] proxy unreachable', error);
     return null;
   }
-
-  const data = (await response.json()) as GeminiGenerateContentResponse;
-  if (data.error?.message) {
-    console.warn('[gemini]', data.error.message);
-    return null;
-  }
-
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
 }
 
 function parseJson<T>(text: string): T | null {
@@ -110,9 +113,22 @@ Return ONLY valid JSON with this exact shape:
 
 const LIVE_AGENT_PROMPTS: Partial<Record<AIAgentId, (input: Record<string, unknown>) => string>> = {
   AI_1_ApplicationPlanner: (input) =>
-    `You are an API catalog planner. Given this application description, recommend matching APIs from an enterprise catalog.
+    `You are an API catalog planner. Recommend APIs for the user's application from the catalog below.
+Use ONLY api_id values from the catalog — do not invent IDs.
+
 Application description: ${JSON.stringify(input.description ?? '')}
-Return JSON: { "text": "brief explanation", "items": [{ "id": "api_id", "label": "API name", "score": 0-100, "reason": "why" }] }`,
+
+Available catalog APIs:
+${JSON.stringify(input.availableApis ?? [], null, 2)}
+
+Return JSON only:
+{
+  "text": "brief explanation of the bundle",
+  "items": [
+    { "id": "exact api_id from catalog", "label": "API name", "score": 0-100, "reason": "why it fits" }
+  ]
+}
+Pick 3-6 best matches. Every item.id MUST be an exact api_id from the catalog.`,
 
   AI_3_PurposeHelper: (input) =>
     `Draft a subscription purpose statement for an API access request.

@@ -8,6 +8,11 @@ import { ApiCard } from '@/components/shared/ApiCard';
 import { SDKPanel } from '@/components/sdk/SDKPanel';
 import { useNotify } from '@/hooks/useNotify';
 import { ROUTES } from '@/config/routes';
+import {
+  buildPlannerCatalog,
+  normalizePlannerItems,
+  suggestPlannerBundleFromDescription,
+} from '@/lib/planner';
 import { buildUserSubscriptionMap } from '@/lib/subscriptions';
 import { getDomainName } from '@/data/domains';
 import type { Subscription } from '@/types';
@@ -35,10 +40,22 @@ export function ApplicationPlanner() {
     setBundle([]);
     dispatch({ type: 'SET_PLANNER', payload: { description } });
     try {
-      const res = await getAIResponse('AI_1_ApplicationPlanner', { description });
+      const res = await getAIResponse('AI_1_ApplicationPlanner', {
+        description,
+        availableApis: buildPlannerCatalog(state.apis),
+      });
       setAiText(res?.text);
-      setBundle(res?.items ?? []);
-      if (!res?.items?.length) {
+
+      let items = normalizePlannerItems(res, state.apis);
+      if (!items.length && description.trim()) {
+        items = suggestPlannerBundleFromDescription(description, state.apis);
+        if (items.length && res?.text) {
+          setAiText(`${res.text} (Bundle filled from catalog search because no valid API IDs were returned.)`);
+        }
+      }
+
+      setBundle(items);
+      if (!items.length) {
         notify(
           'No matches found',
           'The planner could not map your description to catalog APIs. Try adding more detail.',

@@ -1,6 +1,6 @@
 import { AI_CONFIG, type AIAgentId } from '@/config/ai';
 import { AI_RESPONSES, hashInput } from '@/data/ai-responses';
-import { callLiveAgent, isGeminiConfigured } from '@/lib/gemini';
+import { callLiveAgent } from '@/lib/gemini';
 import type { AIResponse } from '@/types';
 import { delay } from '@/lib/utils';
 
@@ -39,10 +39,7 @@ export async function getAIResponse(
     return null;
   }
 
-  if (
-    isGeminiConfigured() &&
-    (LIVE_AGENTS.has(agentId) || PRECOMPUTE_AT_REGISTRATION.has(agentId))
-  ) {
+  if (LIVE_AGENTS.has(agentId) || PRECOMPUTE_AT_REGISTRATION.has(agentId)) {
     const live = await callLiveAgent(agentId, input as Record<string, unknown>);
     if (live) return live;
   }
