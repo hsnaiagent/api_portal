@@ -87,8 +87,12 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-brand-green via-brand-green to-brand-blue-dark text-brand-white flex-col justify-center p-12">
-        <img src={BRAND.logoPath} alt="" className="h-12 mb-8 invert brightness-0" />
-        <h1 className="text-4xl font-bold">{BRAND.name}</h1>
+        <img
+          src={BRAND.logoPath}
+          alt={BRAND.name}
+          className="mb-6 h-16 w-auto max-w-full object-contain drop-shadow-sm"
+        />
+        <h1 className="text-4xl font-bold tracking-tight">{BRAND.name}</h1>
         <p className="text-xl mt-4 opacity-90">{BRAND.tagline}</p>
         <p className="mt-8 opacity-80 max-w-md">
           Discover, govern, and connect enterprise APIs across HR, Finance, Operations, Procurement,
@@ -97,9 +101,13 @@ export function LoginPage() {
       </div>
       <div className="flex-1 flex items-center justify-center p-8 bg-slate-50">
         <div className="w-full max-w-lg space-y-6">
-          <div className="lg:hidden text-center mb-4">
-            <img src={BRAND.logoPath} alt="" className="h-10 mx-auto" />
-            <h1 className="text-2xl font-bold mt-4">{BRAND.name}</h1>
+          <div className="lg:hidden text-center mb-6">
+            <img
+              src={BRAND.logoPath}
+              alt={BRAND.name}
+              className="mx-auto h-12 w-auto max-w-full object-contain drop-shadow-sm"
+            />
+            <h1 className="text-2xl font-bold mt-4 tracking-tight">{BRAND.name}</h1>
           </div>
 
           <button
