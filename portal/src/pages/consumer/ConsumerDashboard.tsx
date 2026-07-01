@@ -1,26 +1,16 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Search, FileKey } from 'lucide-react';
+import { Sparkles, FileKey } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { usePortal } from '@/store/AppStore';
-import { ApiCard } from '@/components/shared/ApiCard';
-import { useVisibleApis } from '@/hooks/useVisibleApis';
-import { buildUserSubscriptionMap, isPendingSubscription } from '@/lib/subscriptions';
-import { getDomainName } from '@/data/domains';
+import { isPendingSubscription } from '@/lib/subscriptions';
 
 export function ConsumerDashboard() {
   const { state } = usePortal();
-  const visible = useVisibleApis(state.apis).slice(0, 4);
   const mySubs = state.subscriptions.filter(
     (s) => s.requested_by_user_id === state.currentUser?.user_id,
   );
   const active = mySubs.filter((s) => s.status === 'active').length;
   const pending = mySubs.filter((s) => isPendingSubscription(s.status)).length;
-
-  const subMap = useMemo(
-    () => buildUserSubscriptionMap(state.subscriptions, state.currentUser?.user_id),
-    [state.subscriptions, state.currentUser?.user_id],
-  );
 
   return (
     <div className="space-y-8">
@@ -67,34 +57,6 @@ export function ConsumerDashboard() {
           </div>
         </div>
       </Link>
-
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Featured APIs</h2>
-          <Link
-            to={ROUTES.consumer.catalog}
-            className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline flex items-center gap-1"
-          >
-            <Search className="h-4 w-4" /> Browse catalog
-          </Link>
-        </div>
-        {visible.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-slate-500">
-            No published APIs are available to you yet.
-          </p>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {visible.map((api) => (
-              <ApiCard
-                key={api.api_id}
-                api={api}
-                subscription={subMap.get(api.api_id) ?? null}
-                domainName={getDomainName(api.domain_id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
 
       <Link
         to={ROUTES.consumer.subscriptions}
