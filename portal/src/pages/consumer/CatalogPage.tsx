@@ -66,7 +66,7 @@ export function CatalogPage() {
 
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-[10px] h-4 w-4 text-slate-400" />
           <input
             value={query}
             onChange={(e) => setFilters({ query: e.target.value })}
@@ -75,13 +75,18 @@ export function CatalogPage() {
             className="w-full rounded-lg border border-slate-200 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-brand-blue"
           />
         </div>
-        <button
-          type="button"
-          onClick={runSearch}
-          className="rounded-lg bg-brand-blue text-brand-white px-4 py-2 text-sm font-medium hover:bg-brand-blue-dark flex items-center gap-2 justify-center"
-        >
-          <AIBadge label="Indexed Search" /> Search
-        </button>
+        <div className="flex flex-col gap-1 sm:min-w-[180px]">
+          <button
+            type="button"
+            onClick={runSearch}
+            className="rounded-xl border border-slate-200 bg-brand-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-brand-blue hover:text-brand-blue hover:shadow-md flex items-center gap-2 justify-center whitespace-nowrap"
+          >
+            <AIBadge label="Smart Search" /> Search
+          </button>
+          <p className="text-xs text-slate-500 text-center sm:text-left">
+            Searches names, descriptions, tags, and curated terms.
+          </p>
+        </div>
       </div>
 
       {contextMessage && (
