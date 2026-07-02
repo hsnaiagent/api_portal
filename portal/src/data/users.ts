@@ -6,7 +6,7 @@ export const users: User[] = [
 
     email: 'ahmad.alrashidi@example.com',
 
-    display_name: 'Ahmad Al-Rashidi',
+    display_name: 'Ahmad',
 
     portal_roles: ['developer'],
 
