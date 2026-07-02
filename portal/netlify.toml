@@ -16,6 +16,16 @@
   status = 200
 
 [[redirects]]
+  from = "/api/sdk/precompute"
+  to = "/.netlify/functions/sdk"
+  status = 200
+
+[[redirects]]
+  from = "/api/sdk/generate"
+  to = "/.netlify/functions/sdk"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

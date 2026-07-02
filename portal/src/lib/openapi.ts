@@ -4,9 +4,15 @@ export interface ParsedSpec {
   version?: string;
   title?: string;
   endpoints: OpenAPIEndpoint[];
+  content: Record<string, unknown>;
 }
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'] as const;
+
+export interface OpenApiValidationResult {
+  valid: boolean;
+  errors: string[];
+}
 
 function extractResponseExample(op: Record<string, unknown>): object | undefined {
   const responses = op.responses as Record<string, unknown> | undefined;
@@ -22,12 +28,42 @@ function extractResponseExample(op: Record<string, unknown>): object | undefined
   return example && typeof example === 'object' ? (example as object) : undefined;
 }
 
+export function validateOpenApiSpec(doc: Record<string, unknown>): OpenApiValidationResult {
+  const errors: string[] = [];
+
+  const hasOpenApi = typeof doc.openapi === 'string' && doc.openapi.length > 0;
+  const hasSwagger = typeof doc.swagger === 'string' && doc.swagger.length > 0;
+  if (!hasOpenApi && !hasSwagger) {
+    errors.push('Spec must include an "openapi" or "swagger" version field.');
+  }
+
+  const paths = doc.paths as Record<string, unknown> | undefined;
+  if (!paths || typeof paths !== 'object' || Object.keys(paths).length === 0) {
+    errors.push('Spec must define at least one path in "paths".');
+    return { valid: false, errors };
+  }
+
+  let operationCount = 0;
+  for (const opsRaw of Object.values(paths)) {
+    const ops = opsRaw as Record<string, unknown> | null;
+    if (!ops || typeof ops !== 'object') continue;
+    for (const method of HTTP_METHODS) {
+      if (ops[method]) operationCount += 1;
+    }
+  }
+
+  if (operationCount === 0) {
+    errors.push('Spec must define at least one HTTP operation under "paths".');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
 /**
- * Parse an OpenAPI document (JSON) into the portal's endpoint shape. Returns null
- * if the text is not valid JSON (e.g. YAML) so callers can fall back gracefully.
- * No external parser dependency is added — JSON only by design.
+ * Parse raw OpenAPI JSON text into the full document plus portal endpoint shape.
+ * Returns null if the text is not valid JSON.
  */
-export function parseOpenApiSpec(raw: string): ParsedSpec | null {
+export function parseOpenApiSpecContent(raw: string): ParsedSpec | null {
   if (!raw.trim()) return null;
   let doc: Record<string, unknown>;
   try {
@@ -36,6 +72,9 @@ export function parseOpenApiSpec(raw: string): ParsedSpec | null {
     return null;
   }
   if (!doc || typeof doc !== 'object') return null;
+
+  const validation = validateOpenApiSpec(doc);
+  if (!validation.valid) return null;
 
   const endpoints: OpenAPIEndpoint[] = [];
   const paths = doc.paths as Record<string, unknown> | undefined;
@@ -72,7 +111,16 @@ export function parseOpenApiSpec(raw: string): ParsedSpec | null {
     version: info?.version ? String(info.version) : undefined,
     title: info?.title ? String(info.title) : undefined,
     endpoints,
+    content: doc,
   };
+}
+
+/**
+ * Parse an OpenAPI document (JSON) into the portal's endpoint shape. Returns null
+ * if the text is not valid JSON (e.g. YAML) so callers can fall back gracefully.
+ */
+export function parseOpenApiSpec(raw: string): ParsedSpec | null {
+  return parseOpenApiSpecContent(raw);
 }
 
 /** Lightweight validation for the spec textarea. JSON is fully validated; non-JSON (YAML) is allowed but flagged. */
@@ -81,23 +129,43 @@ export function describeSpec(raw: string): {
   note?: string;
   endpointCount: number;
   version?: string;
+  errors?: string[];
 } {
   if (!raw.trim())
     return { ok: false, note: 'Paste an OpenAPI spec to continue.', endpointCount: 0 };
-  const parsed = parseOpenApiSpec(raw);
-  if (!parsed) {
+
+  let doc: Record<string, unknown>;
+  try {
+    doc = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
     return {
-      ok: true,
-      note: 'Spec could not be parsed as JSON — AI analysis will still run, but endpoints will not be auto-extracted.',
+      ok: false,
+      note: 'OpenAPI spec must be valid JSON. YAML is not supported in this version.',
       endpointCount: 0,
     };
   }
+
+  const validation = validateOpenApiSpec(doc);
+  if (!validation.valid) {
+    return {
+      ok: false,
+      note: validation.errors.join(' '),
+      endpointCount: 0,
+      errors: validation.errors,
+    };
+  }
+
+  const parsed = parseOpenApiSpecContent(raw);
+  if (!parsed) {
+    return { ok: false, note: 'Could not parse OpenAPI spec.', endpointCount: 0 };
+  }
+
   return {
     ok: true,
     note:
       parsed.endpoints.length > 0
         ? `Parsed ${parsed.endpoints.length} endpoint${parsed.endpoints.length === 1 ? '' : 's'}.`
-        : 'No paths found in spec; a default endpoint will be used.',
+        : 'No paths found in spec.',
     endpointCount: parsed.endpoints.length,
     version: parsed.version,
   };

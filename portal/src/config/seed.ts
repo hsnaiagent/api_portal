@@ -1,1 +1,1 @@
-export const SEED_VERSION = 4;
+export const SEED_VERSION = 5;

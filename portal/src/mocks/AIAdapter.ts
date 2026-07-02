@@ -20,6 +20,7 @@ const PRECOMPUTE_AT_REGISTRATION = new Set<AIAgentId>([
   'AI_6_DescriptionGenerator',
   'AI_7_TagSuggester',
   'AI_8_ClassificationAdvisor',
+  'AI_16_SchemaSDKGenerator',
 ]);
 
 /** Agents replaced by stored search_index — handled at call sites, not via LLM. */

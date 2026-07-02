@@ -1,4 +1,6 @@
 import type { API, ApiSearchIndex, Classification, LifecycleStatus } from '@/types';
+import { buildOpenApiSpecFromApi } from '@/lib/openapi-builders';
+import { getSdkSnippetsForApi } from '@/data/sdk-snippets';
 
 const GENERATED_AT = '2026-06-30T00:00:00Z';
 
@@ -235,6 +237,19 @@ function api(
   tier: 1 | 2 | 3 = 2,
   dataOwner?: string,
 ): API {
+  const version = '1.0.0';
+  const base = `/v1/${slug}`;
+  const endpoints = defaultEndpoints(base);
+  const openapi_spec_content = buildOpenApiSpecFromApi({
+    name,
+    slug,
+    version,
+    description,
+    endpoints,
+  });
+  const snippets = getSdkSnippetsForApi(id, name, slug, description, endpoints);
+  const generatedAt = '2026-07-02T00:00:00Z';
+
   return {
     api_id: id,
     domain_id,
@@ -247,8 +262,18 @@ function api(
     data_owner_user_id: dataOwner,
     gateway_tier: tier,
     tags,
-    version: '1.0.0',
-    endpoints: defaultEndpoints(`/v1/${slug}`),
+    version,
+    endpoints,
+    openapi_spec_content,
+    sdk_artifacts: {
+      curl: snippets.curl,
+      python: snippets.python,
+      nodejs: snippets.nodejs,
+      generated_at: generatedAt,
+      model: 'agent-curated',
+      approved_at: generatedAt,
+      approved_by_user_id: owner,
+    },
     search_index: API_SEARCH_INDEXES[id],
   };
 }

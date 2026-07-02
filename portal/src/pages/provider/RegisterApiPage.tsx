@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { usePortal } from '@/store/AppStore';
 import { getAIResponse } from '@/mocks/AIAdapter';
 import { generateSearchIndex } from '@/lib/gemini';
-import { parseOpenApiSpec, describeSpec } from '@/lib/openapi';
+import { parseOpenApiSpecContent, describeSpec } from '@/lib/openapi';
+import type { PrecomputedSdkResult } from '@/lib/sdk-api';
+import { SdkReviewStep } from '@/components/sdk/SdkReviewStep';
 import { AIThinkingOverlay } from '@/components/ai/AIThinkingOverlay';
 import { AIBadge } from '@/components/ai/AIBadge';
 import { useNotify } from '@/hooks/useNotify';
 import { CLASSIFICATIONS } from '@/config/classification';
 import { ROUTES } from '@/config/routes';
-import type { API, Classification, OpenAPIEndpoint } from '@/types';
+import type { API, ApiSdkArtifacts, Classification } from '@/types';
 
 export function RegisterApiPage({
   fixedDomainId,
@@ -37,8 +39,11 @@ export function RegisterApiPage({
     { id: string; label: string; score?: number; reason?: string }[]
   >([]);
   const [confirmedDup, setConfirmedDup] = useState(false);
+  const [sdkApproved, setSdkApproved] = useState(false);
+  const [sdkArtifacts, setSdkArtifacts] = useState<PrecomputedSdkResult | null>(null);
 
   const specInfo = describeSpec(spec);
+  const parsedSpec = spec.trim() ? parseOpenApiSpecContent(spec) : null;
 
   const runAI = async (agent: Parameters<typeof getAIResponse>[0]) => {
     return getAIResponse(agent, {
@@ -75,6 +80,10 @@ export function RegisterApiPage({
       notify('Spec required', 'Paste an OpenAPI spec before continuing.', 'warning');
       return;
     }
+    if (!specInfo.ok) {
+      notify('Invalid spec', specInfo.note ?? 'OpenAPI spec must be valid JSON.', 'warning');
+      return;
+    }
     setLoading(true);
     try {
       const [q, t, c] = await Promise.all([
@@ -99,31 +108,46 @@ export function RegisterApiPage({
     }
   };
 
-  const buildEndpoints = (slug: string): { endpoints: OpenAPIEndpoint[]; version: string } => {
-    const parsed = parseOpenApiSpec(spec);
-    if (parsed && parsed.endpoints.length > 0) {
-      return { endpoints: parsed.endpoints, version: parsed.version ?? '1.0.0' };
-    }
-    return {
-      endpoints: [
-        { method: 'GET', path: `/v1/${slug}`, summary: name, responseExample: { ok: true } },
-      ],
-      version: parsed?.version ?? '1.0.0',
-    };
+  const handleSdkApproved = (artifacts: PrecomputedSdkResult) => {
+    setSdkArtifacts(artifacts);
+    setSdkApproved(true);
+    notify('SDK approved', 'Code snippets approved. Proceed to submit your proposal.', 'success');
+    setStep(5);
   };
 
   const submit = async () => {
     if (!state.currentUser) return;
+    if (!parsedSpec?.content) {
+      notify('Invalid spec', 'A valid OpenAPI spec is required to register an API.', 'error');
+      return;
+    }
+    if (!sdkApproved || !sdkArtifacts) {
+      notify('SDK review required', 'Approve the pre-generated SDK snippets before submitting.', 'warning');
+      setStep(4);
+      return;
+    }
+
     setSubmitting(true);
     try {
       const dup = await runAI('AI_9_DuplicationDetector');
       setDuplicates(dup?.items ?? []);
       if (!confirmedDup && (dup?.items?.length ?? 0) > 0) {
-        setStep(4);
+        setStep(5);
         return;
       }
+
       const slug = name.toLowerCase().replace(/\s+/g, '-');
-      const { endpoints, version } = buildEndpoints(slug);
+      const now = new Date().toISOString();
+      const sdkArtifactsRecord: ApiSdkArtifacts = {
+        curl: sdkArtifacts.curl,
+        python: sdkArtifacts.python,
+        nodejs: sdkArtifacts.nodejs,
+        generated_at: now,
+        model: sdkArtifacts.model,
+        approved_at: now,
+        approved_by_user_id: state.currentUser.user_id,
+      };
+
       const api: API = {
         api_id: `api_new_${Date.now()}`,
         domain_id:
@@ -136,8 +160,10 @@ export function RegisterApiPage({
         owner_user_id: state.currentUser.user_id,
         gateway_tier: tier,
         tags,
-        version,
-        endpoints,
+        version: parsedSpec.version ?? '1.0.0',
+        endpoints: parsedSpec.endpoints,
+        openapi_spec_content: parsedSpec.content,
+        sdk_artifacts: sdkArtifactsRecord,
         ...(llmMode
           ? {
               llm_config: {
@@ -148,18 +174,32 @@ export function RegisterApiPage({
             }
           : {}),
       };
+
       dispatch({ type: 'ADD_API', payload: api });
       dispatch({
         type: 'ADD_AUDIT',
         payload: {
           audit_id: `aud_${Date.now()}`,
-          timestamp: new Date().toISOString(),
+          timestamp: now,
           actor_user_id: state.currentUser.user_id,
           actor_type: 'user',
           action: 'api.registered',
           entity_type: 'api',
           entity_id: api.api_id,
-          payload: { name, classification, endpoints: endpoints.length },
+          payload: { name, classification, endpoints: parsedSpec.endpoints.length },
+        },
+      });
+      dispatch({
+        type: 'ADD_AUDIT',
+        payload: {
+          audit_id: `aud_${Date.now() + 1}`,
+          timestamp: now,
+          actor_user_id: state.currentUser.user_id,
+          actor_type: 'user',
+          action: 'api.sdk.approved',
+          entity_type: 'api',
+          entity_id: api.api_id,
+          payload: { model: sdkArtifacts.model, languages: ['curl', 'python', 'nodejs'] },
         },
       });
 
@@ -176,7 +216,7 @@ export function RegisterApiPage({
 
       notify(
         'API proposed',
-        `${name} was submitted for admin review with ${endpoints.length} endpoint${endpoints.length === 1 ? '' : 's'}.`,
+        `${name} was submitted for admin review with ${parsedSpec.endpoints.length} endpoint${parsedSpec.endpoints.length === 1 ? '' : 's'}.`,
         'success',
       );
       navigate(successRoute ?? ROUTES.provider.myApis);
@@ -192,8 +232,8 @@ export function RegisterApiPage({
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Register API</h1>
-      <div className="flex gap-2 text-sm">
-        {[1, 2, 3, 4].map((s) => (
+      <div className="flex gap-2 text-sm flex-wrap">
+        {[1, 2, 3, 4, 5].map((s) => (
           <span
             key={s}
             className={`px-3 py-1 rounded-full ${step === s ? 'bg-brand-green text-brand-white' : 'bg-slate-100'}`}
@@ -252,19 +292,24 @@ export function RegisterApiPage({
       {step === 2 && (
         <div className="space-y-4 rounded-xl border bg-brand-white p-6">
           <label htmlFor="api-spec" className="block text-sm font-medium">
-            OpenAPI spec
+            OpenAPI spec (JSON)
           </label>
           <textarea
             id="api-spec"
             value={spec}
             onChange={(e) => setSpec(e.target.value)}
-            placeholder="Paste OpenAPI spec (JSON)..."
+            placeholder='Paste OpenAPI 3.0 spec as JSON — e.g. { "openapi": "3.0.3", "paths": { ... } }'
             rows={8}
             className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
           />
-          {spec.trim() && <p className="text-xs text-slate-500">{specInfo.note}</p>}
+          {spec.trim() && (
+            <p className={`text-xs ${specInfo.ok ? 'text-slate-500' : 'text-red-600'}`}>
+              {specInfo.note}
+            </p>
+          )}
           <p className="text-xs text-slate-500">
-            AI-7 Tag Suggester, AI-8 Classification Advisor, AI-10 Spec Quality run on continue
+            The OpenAPI schema is the sole source of truth for SDK generation. AI-7, AI-8, AI-10
+            run on continue.
           </p>
           <AIThinkingOverlay loading={loading} />
           <div className="flex gap-2">
@@ -279,7 +324,7 @@ export function RegisterApiPage({
             <button
               type="button"
               onClick={onSpecUpload}
-              disabled={busy || !spec.trim()}
+              disabled={busy || !spec.trim() || !specInfo.ok}
               className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
             >
               {loading ? 'Analyzing…' : 'Analyze & Continue'}
@@ -395,42 +440,74 @@ export function RegisterApiPage({
             </button>
             <button
               type="button"
-              onClick={submit}
-              disabled={busy}
+              onClick={() => {
+                setSdkApproved(false);
+                setSdkArtifacts(null);
+                setStep(4);
+              }}
+              disabled={busy || !parsedSpec?.content}
               className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
             >
-              {submitting ? 'Submitting…' : 'Submit proposal'}
+              Continue to SDK Review
             </button>
           </div>
         </div>
       )}
 
-      {step === 4 && (
-        <div className="space-y-4 rounded-xl border border-orange-200 bg-orange-50 p-6">
-          <h3 className="font-semibold flex items-center gap-2">
-            <AIBadge label="AI-9" /> Similar APIs found
-          </h3>
-          {duplicates.map((d) => (
-            <p key={d.id} className="text-sm">
-              {d.label} ({d.score}% — {d.reason})
-            </p>
-          ))}
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={confirmedDup}
-              onChange={(e) => setConfirmedDup(e.target.checked)}
-            />{' '}
-            I reviewed similar APIs and confirm a new API is needed
-          </label>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!confirmedDup || submitting}
-            className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-          >
-            {submitting ? 'Submitting…' : 'Confirm & Submit'}
-          </button>
+      {step === 4 && parsedSpec?.content && (
+        <SdkReviewStep
+          openapiSpecContent={parsedSpec.content}
+          apiName={name}
+          approved={sdkApproved}
+          onApproved={handleSdkApproved}
+          onBack={() => setStep(3)}
+        />
+      )}
+
+      {step === 5 && (
+        <div className="space-y-4 rounded-xl border bg-brand-white p-6">
+          {duplicates.length === 0 ? (
+            <>
+              <p className="text-sm text-slate-600">
+                SDK snippets approved. Submit your API proposal for admin review.
+              </p>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={submitting || !sdkApproved}
+                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+              >
+                {submitting ? 'Submitting…' : 'Submit proposal'}
+              </button>
+            </>
+          ) : (
+            <div className="space-y-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <AIBadge label="AI-9" /> Similar APIs found
+              </h3>
+              {duplicates.map((d) => (
+                <p key={d.id} className="text-sm">
+                  {d.label} ({d.score}% — {d.reason})
+                </p>
+              ))}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={confirmedDup}
+                  onChange={(e) => setConfirmedDup(e.target.checked)}
+                />{' '}
+                I reviewed similar APIs and confirm a new API is needed
+              </label>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={!confirmedDup || submitting}
+                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+              >
+                {submitting ? 'Submitting…' : 'Confirm & Submit'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

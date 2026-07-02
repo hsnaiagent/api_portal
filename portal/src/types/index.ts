@@ -32,7 +32,18 @@ export type ProviderStatus = 'pending' | 'accepted' | 'rejected';
 export type WorkflowStatus =
   'pending' | 'in_progress' | 'approved' | 'rejected' | 'cancelled' | 'expired';
 
-export type SDKLanguage = 'curl' | 'python' | 'javascript' | 'typescript' | 'java' | 'go';
+export type SDKLanguage =
+  | 'curl'
+  | 'python'
+  | 'nodejs'
+  | 'javascript'
+  | 'typescript'
+  | 'java'
+  | 'go';
+
+export type PrecomputedSdkLanguage = 'curl' | 'python' | 'nodejs';
+
+export type OnDemandSdkLanguage = 'javascript' | 'typescript' | 'java' | 'go';
 
 export type ProviderAccessStatus = 'pending' | 'approved' | 'rejected';
 
@@ -128,6 +139,22 @@ export interface LlmConfig {
   monthly_token_budget?: number;
 }
 
+export interface ApiSdkArtifacts {
+  curl: string;
+
+  python: string;
+
+  nodejs: string;
+
+  generated_at: string;
+
+  model: string;
+
+  approved_at: string;
+
+  approved_by_user_id: string;
+}
+
 export interface API {
   api_id: string;
 
@@ -154,6 +181,10 @@ export interface API {
   version: string;
 
   endpoints: OpenAPIEndpoint[];
+
+  openapi_spec_content?: Record<string, unknown>;
+
+  sdk_artifacts?: ApiSdkArtifacts;
 
   search_index?: ApiSearchIndex;
 

@@ -13,7 +13,8 @@ export type AIAgentId =
   | 'AI_12_AuditAnomalyAlerts'
   | 'AI_13_CatalogHealthSummary'
   | 'AI_14_PortalAssistant'
-  | 'AI_15_NaturalLanguageSearch';
+  | 'AI_15_NaturalLanguageSearch'
+  | 'AI_16_SchemaSDKGenerator';
 
 export const AI_CONFIG = {
   enabled: true,
@@ -36,5 +37,6 @@ export const AI_CONFIG = {
     AI_13_CatalogHealthSummary: true,
     AI_14_PortalAssistant: true,
     AI_15_NaturalLanguageSearch: true,
+    AI_16_SchemaSDKGenerator: true,
   } satisfies Record<AIAgentId, boolean>,
 } as const;

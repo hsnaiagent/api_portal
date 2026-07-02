@@ -82,7 +82,18 @@ export const AI_RESPONSES: Record<AIAgentId, ResponseMap> = {
   },
   AI_5_ContextualSDK: {
     default: {
-      code: `# Personalized for your HR Leadership Dashboard\nimport requests\n\nBASE = "https://api.internal/v1/salary-stats"\n\ndef fetch_leadership_salary_report(access_token: str, month: str):\n    headers = {"Authorization": f"Bearer {access_token}"}\n    params = {"month": month, "aggregate": "department"}\n    response = requests.get(BASE, headers=headers, params=params)\n    response.raise_for_status()\n    return response.json()`,
+      code: `# Schema-driven SDK snippet (fallback)
+import requests
+
+BASE_URL = "https://api.internal"
+TIMEOUT = 30
+
+session = requests.Session()
+session.headers.update({"Authorization": "Bearer YOUR_TOKEN"})
+
+response = session.get(f"{BASE_URL}/v1/resource", timeout=TIMEOUT)
+response.raise_for_status()
+print(response.json())`,
     },
   },
   AI_6_DescriptionGenerator: {
@@ -178,6 +189,20 @@ export const AI_RESPONSES: Record<AIAgentId, ResponseMap> = {
   AI_15_NaturalLanguageSearch: {
     default: {
       text: 'Searching catalog for APIs related to your natural language query. Prioritizing semantic matches over keyword overlap.',
+    },
+  },
+  AI_16_SchemaSDKGenerator: {
+    default: {
+      code: `# Schema-driven SDK (fallback)
+import requests
+
+response = requests.get(
+    "https://api.internal/v1/resource",
+    headers={"Authorization": "Bearer YOUR_TOKEN"},
+    timeout=30,
+)
+response.raise_for_status()
+print(response.json())`,
     },
   },
 };

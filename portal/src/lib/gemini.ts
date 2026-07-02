@@ -136,9 +136,20 @@ Context: ${JSON.stringify(input)}
 Return JSON: { "text": "purpose paragraph for audit trail" }`,
 
   AI_5_ContextualSDK: (input) =>
-    `Generate a personalized SDK code snippet for this API consumer context.
-Context: ${JSON.stringify(input)}
-Return JSON: { "code": "python or curl snippet with comments" }`,
+    `Generate a schema-faithful SDK code snippet. Translate ONLY what is in the OpenAPI schema — do NOT invent endpoints or business logic.
+API name: ${JSON.stringify(input.api_name ?? 'API')}
+Language: ${JSON.stringify(input.language ?? 'typescript')}
+OpenAPI schema: ${JSON.stringify(input.spec ?? input.openapi_spec_content ?? {})}
+Include production boilerplate: Bearer auth (YOUR_TOKEN), explicit timeouts, HTTP error handling. Base URL: https://api.internal
+Return JSON: { "code": "complete code snippet" }`,
+
+  AI_16_SchemaSDKGenerator: (input) =>
+    `Generate schema-faithful SDK artifacts from the OpenAPI schema. Do NOT invent endpoints or business logic.
+API name: ${JSON.stringify(input.api_name ?? 'API')}
+Language: ${JSON.stringify(input.language ?? 'python')}
+OpenAPI schema: ${JSON.stringify(input.spec ?? input.openapi_spec_content ?? {})}
+Include production boilerplate: Bearer auth (YOUR_TOKEN), explicit timeouts, HTTP error handling. Base URL: https://api.internal
+Return JSON: { "code": "complete code snippet" }`,
 
   AI_9_DuplicationDetector: (input) =>
     `Check if this new API proposal duplicates existing catalog APIs.
