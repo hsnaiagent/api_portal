@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { emptyEnvelope, normalizeData, validateData } from './state-schema.mjs';
 import { registerGeminiRoutes } from './gemini-routes.mjs';
 import { registerSdkRoutes } from './sdk-routes.mjs';
+import { registerBasepathRoutes } from './basepath-routes.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -136,6 +137,7 @@ app.get('/api/state', async (_req, res) => {
 
 registerGeminiRoutes(app);
 registerSdkRoutes(app);
+registerBasepathRoutes(app, readEnvelope);
 
 app.put('/api/state', async (req, res) => {
   if (!req.body?.data) {

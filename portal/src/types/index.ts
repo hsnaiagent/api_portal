@@ -184,6 +184,10 @@ export interface API {
 
   openapi_spec_content?: Record<string, unknown>;
 
+  backend_url?: string;
+
+  gateway_path_prefix?: string;
+
   sdk_artifacts?: ApiSdkArtifacts;
 
   search_index?: ApiSearchIndex;

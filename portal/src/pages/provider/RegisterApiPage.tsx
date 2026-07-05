@@ -1,16 +1,22 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortal } from '@/store/AppStore';
 import { getAIResponse } from '@/mocks/AIAdapter';
 import { generateSearchIndex } from '@/lib/gemini';
 import { parseOpenApiSpecContent, describeSpec } from '@/lib/openapi';
+import {
+  extractRegistrationFields,
+  patchSpecContent,
+  slugifyName,
+} from '@/lib/openapi-registration';
 import type { PrecomputedSdkResult } from '@/lib/sdk-api';
 import { SdkReviewStep } from '@/components/sdk/SdkReviewStep';
-import { AIThinkingOverlay } from '@/components/ai/AIThinkingOverlay';
+import { ReadinessChecklist } from '@/components/register/ReadinessChecklist';
 import { AIBadge } from '@/components/ai/AIBadge';
 import { useNotify } from '@/hooks/useNotify';
 import { CLASSIFICATIONS } from '@/config/classification';
 import { ROUTES } from '@/config/routes';
+import { SAMPLE_OPENAPI_SPEC_JSON } from '@/data/sample-openapi-spec';
 import type { API, ApiSdkArtifacts, Classification } from '@/types';
 
 export function RegisterApiPage({
@@ -21,20 +27,22 @@ export function RegisterApiPage({
   const { state, dispatch } = usePortal();
   const navigate = useNavigate();
   const notify = useNotify();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [step, setStep] = useState(1);
+  const [spec, setSpec] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [spec, setSpec] = useState('');
+  const [version, setVersion] = useState('');
+  const [targetUrl, setTargetUrl] = useState('');
+  const [basepath, setBasepath] = useState('');
   const [classification, setClassification] = useState<Classification>('internal');
   const [tier, setTier] = useState<1 | 2 | 3>(1);
-  const [tags, setTags] = useState<string[]>([]);
   const [llmModel, setLlmModel] = useState('');
   const [llmRateLimit, setLlmRateLimit] = useState('');
   const [llmTokenBudget, setLlmTokenBudget] = useState('');
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [aiText, setAiText] = useState<string>();
-  const [checklist, setChecklist] = useState<{ item: string; passed: boolean }[]>([]);
+  const [hardBlockersActive, setHardBlockersActive] = useState(true);
   const [duplicates, setDuplicates] = useState<
     { id: string; label: string; score?: number; reason?: string }[]
   >([]);
@@ -44,6 +52,23 @@ export function RegisterApiPage({
 
   const specInfo = describeSpec(spec);
   const parsedSpec = spec.trim() ? parseOpenApiSpecContent(spec) : null;
+
+  const patchedSpecContent = useMemo(() => {
+    if (!parsedSpec?.content) return null;
+    return patchSpecContent(parsedSpec.content, {
+      name: name.trim(),
+      description: description.trim(),
+      version: version.trim() || '1.0.0',
+      backendUrl: targetUrl.trim(),
+    });
+  }, [parsedSpec?.content, name, description, version, targetUrl]);
+
+  const verificationComplete =
+    name.trim() &&
+    description.trim() &&
+    version.trim() &&
+    targetUrl.trim() &&
+    basepath.trim();
 
   const runAI = async (agent: Parameters<typeof getAIResponse>[0]) => {
     return getAIResponse(agent, {
@@ -59,52 +84,35 @@ export function RegisterApiPage({
     });
   };
 
-  const generateDescription = async () => {
-    setLoading(true);
-    try {
-      const res = await runAI('AI_6_DescriptionGenerator');
-      setDescription(res?.text ?? description);
-    } catch {
-      notify(
-        'AI unavailable',
-        'Could not generate a description. Please write one manually.',
-        'warning',
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onSpecUpload = async () => {
+  const onSpecContinue = () => {
     if (!spec.trim()) {
-      notify('Spec required', 'Paste an OpenAPI spec before continuing.', 'warning');
+      notify('Spec required', 'Paste or upload an OpenAPI spec before continuing.', 'warning');
       return;
     }
-    if (!specInfo.ok) {
+    if (!specInfo.ok || !parsedSpec?.content) {
       notify('Invalid spec', specInfo.note ?? 'OpenAPI spec must be valid JSON.', 'warning');
       return;
     }
-    setLoading(true);
+
+    const fields = extractRegistrationFields(parsedSpec.content);
+    setName(fields.name);
+    setDescription(fields.description);
+    setVersion(fields.version);
+    setTargetUrl(fields.backendUrl);
+    setBasepath(fields.gatewayPathPrefix);
+    setStep(2);
+  };
+
+  const onSpecFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     try {
-      const [q, t, c] = await Promise.all([
-        getAIResponse('AI_10_SpecQualityChecker', { spec }),
-        getAIResponse('AI_7_TagSuggester', { spec }),
-        getAIResponse('AI_8_ClassificationAdvisor', { spec }),
-      ]);
-      setChecklist(q?.checklist ?? []);
-      setTags(t?.tags ?? []);
-      if (c?.classification) setClassification(c.classification);
-      setAiText(c?.text);
-      setStep(3);
+      const text = await file.text();
+      setSpec(text);
     } catch {
-      notify(
-        'Analysis failed',
-        'Could not analyze the spec. You can continue and set fields manually.',
-        'warning',
-      );
-      setStep(3);
+      notify('Upload failed', 'Could not read the selected file.', 'error');
     } finally {
-      setLoading(false);
+      e.target.value = '';
     }
   };
 
@@ -117,8 +125,13 @@ export function RegisterApiPage({
 
   const submit = async () => {
     if (!state.currentUser) return;
-    if (!parsedSpec?.content) {
+    if (!patchedSpecContent || !parsedSpec) {
       notify('Invalid spec', 'A valid OpenAPI spec is required to register an API.', 'error');
+      return;
+    }
+    if (hardBlockersActive) {
+      notify('Readiness checks failed', 'Resolve all required readiness checks before submitting.', 'error');
+      setStep(2);
       return;
     }
     if (!sdkApproved || !sdkArtifacts) {
@@ -136,7 +149,7 @@ export function RegisterApiPage({
         return;
       }
 
-      const slug = name.toLowerCase().replace(/\s+/g, '-');
+      const slug = slugifyName(name) || name.toLowerCase().replace(/\s+/g, '-');
       const now = new Date().toISOString();
       const sdkArtifactsRecord: ApiSdkArtifacts = {
         curl: sdkArtifacts.curl,
@@ -148,21 +161,25 @@ export function RegisterApiPage({
         approved_by_user_id: state.currentUser.user_id,
       };
 
+      const reparsed = parseOpenApiSpecContent(JSON.stringify(patchedSpecContent));
+
       const api: API = {
         api_id: `api_new_${Date.now()}`,
         domain_id:
           fixedDomainId ?? state.currentUser.provider_domains[0] ?? state.currentUser.domain_id,
-        name,
+        name: name.trim(),
         slug,
-        description,
+        description: description.trim(),
         classification,
         lifecycle_status: 'proposed',
         owner_user_id: state.currentUser.user_id,
         gateway_tier: tier,
-        tags,
-        version: parsedSpec.version ?? '1.0.0',
-        endpoints: parsedSpec.endpoints,
-        openapi_spec_content: parsedSpec.content,
+        tags: [],
+        version: version.trim() || (parsedSpec.version ?? '1.0.0'),
+        endpoints: reparsed?.endpoints ?? parsedSpec.endpoints,
+        openapi_spec_content: patchedSpecContent,
+        backend_url: targetUrl.trim(),
+        gateway_path_prefix: basepath.trim(),
         sdk_artifacts: sdkArtifactsRecord,
         ...(llmMode
           ? {
@@ -186,7 +203,7 @@ export function RegisterApiPage({
           action: 'api.registered',
           entity_type: 'api',
           entity_id: api.api_id,
-          payload: { name, classification, endpoints: parsedSpec.endpoints.length },
+          payload: { name, classification, endpoints: api.endpoints.length },
         },
       });
       dispatch({
@@ -216,7 +233,7 @@ export function RegisterApiPage({
 
       notify(
         'API proposed',
-        `${name} was submitted for admin review with ${parsedSpec.endpoints.length} endpoint${parsedSpec.endpoints.length === 1 ? '' : 's'}.`,
+        `${name} was submitted for admin review with ${api.endpoints.length} endpoint${api.endpoints.length === 1 ? '' : 's'}.`,
         'success',
       );
       navigate(successRoute ?? ROUTES.provider.myApis);
@@ -227,7 +244,8 @@ export function RegisterApiPage({
     }
   };
 
-  const busy = loading || submitting;
+  const backButtonClass =
+    'rounded-lg border-2 border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50';
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -245,9 +263,78 @@ export function RegisterApiPage({
 
       {step === 1 && (
         <div className="space-y-4 rounded-xl border bg-brand-white p-6">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <label htmlFor="api-spec" className="block text-sm font-medium">
+              OpenAPI spec (JSON) <span className="text-red-500">*</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => setSpec(SAMPLE_OPENAPI_SPEC_JSON)}
+              className="text-sm text-brand-blue hover:underline font-medium"
+            >
+              Try with a sample API
+            </button>
+          </div>
+          <textarea
+            id="api-spec"
+            value={spec}
+            onChange={(e) => setSpec(e.target.value)}
+            placeholder='Paste OpenAPI 3.0 spec as JSON — e.g. { "openapi": "3.0.3", "paths": { ... } }'
+            rows={10}
+            className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
+          />
+          {spec.trim() && (
+            <p className={`text-xs ${specInfo.ok ? 'text-slate-500' : 'text-red-600'}`}>
+              {specInfo.note}
+            </p>
+          )}
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={onSpecFileChange}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50"
+            >
+              Upload JSON file
+            </button>
+            <p className="text-xs text-slate-500">
+              The OpenAPI specification is the source of truth for registration.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(successRoute ?? ROUTES.provider.myApis)}
+              className={backButtonClass}
+            >
+              ← Back
+            </button>
+            <button
+              type="button"
+              onClick={onSpecContinue}
+              disabled={!spec.trim() || !specInfo.ok}
+              className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-4 rounded-xl border bg-brand-white p-6">
+          <p className="text-sm text-slate-600">
+            Review the values extracted from your OpenAPI spec. Edit any field if needed.
+          </p>
           <div>
             <label htmlFor="api-name" className="block text-sm font-medium mb-1">
-              API name <span className="text-red-500">*</span>
+              API Name <span className="text-red-500">*</span>
             </label>
             <input
               id="api-name"
@@ -256,10 +343,13 @@ export function RegisterApiPage({
               placeholder="API name"
               className="w-full rounded-lg border px-3 py-2 text-sm"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              This is the visible name shown on the portal.
+            </p>
           </div>
           <div>
             <label htmlFor="api-description" className="block text-sm font-medium mb-1">
-              Description
+              Description <span className="text-red-500">*</span>
             </label>
             <textarea
               id="api-description"
@@ -270,64 +360,63 @@ export function RegisterApiPage({
               className="w-full rounded-lg border px-3 py-2 text-sm"
             />
           </div>
-          <button
-            type="button"
-            onClick={generateDescription}
-            disabled={busy}
-            className="text-sm text-brand-blue flex items-center gap-1 disabled:opacity-50"
-          >
-            <AIBadge label="AI-6" /> {loading ? 'Generating…' : 'Generate description with AI'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setStep(2)}
-            disabled={!name.trim()}
-            className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
+          <div>
+            <label htmlFor="api-version" className="block text-sm font-medium mb-1">
+              Version <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="api-version"
+              value={version}
+              onChange={(e) => setVersion(e.target.value)}
+              placeholder="1.0.0"
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="api-target-url" className="block text-sm font-medium mb-1">
+              Target URL <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="api-target-url"
+              value={targetUrl}
+              onChange={(e) => setTargetUrl(e.target.value)}
+              placeholder="https://apis.example.com/service"
+              className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
+            />
+            <p className="text-xs text-slate-500 mt-1">Upstream routing server URL from the spec.</p>
+          </div>
+          <div>
+            <label htmlFor="api-basepath" className="block text-sm font-medium mb-1">
+              Basepath <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="api-basepath"
+              value={basepath}
+              onChange={(e) => setBasepath(e.target.value)}
+              placeholder="/v1/my-api"
+              className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
+            />
+            <p className="text-xs text-slate-500 mt-1">Gateway path prefix for this API.</p>
+          </div>
 
-      {step === 2 && (
-        <div className="space-y-4 rounded-xl border bg-brand-white p-6">
-          <label htmlFor="api-spec" className="block text-sm font-medium">
-            OpenAPI spec (JSON)
-          </label>
-          <textarea
-            id="api-spec"
-            value={spec}
-            onChange={(e) => setSpec(e.target.value)}
-            placeholder='Paste OpenAPI 3.0 spec as JSON — e.g. { "openapi": "3.0.3", "paths": { ... } }'
-            rows={8}
-            className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
+          <ReadinessChecklist
+            targetUrl={targetUrl}
+            basepath={basepath}
+            specContent={parsedSpec?.content ?? null}
+            onBlockersChange={setHardBlockersActive}
           />
-          {spec.trim() && (
-            <p className={`text-xs ${specInfo.ok ? 'text-slate-500' : 'text-red-600'}`}>
-              {specInfo.note}
-            </p>
-          )}
-          <p className="text-xs text-slate-500">
-            The OpenAPI schema is the sole source of truth for SDK generation. AI-7, AI-8, AI-10
-            run on continue.
-          </p>
-          <AIThinkingOverlay loading={loading} />
+
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              disabled={busy}
-              className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
-            >
-              Back
+            <button type="button" onClick={() => setStep(1)} className={backButtonClass}>
+              ← Back
             </button>
             <button
               type="button"
-              onClick={onSpecUpload}
-              disabled={busy || !spec.trim() || !specInfo.ok}
+              onClick={() => setStep(3)}
+              disabled={!verificationComplete || hardBlockersActive}
               className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
             >
-              {loading ? 'Analyzing…' : 'Analyze & Continue'}
+              Continue
             </button>
           </div>
         </div>
@@ -335,28 +424,8 @@ export function RegisterApiPage({
 
       {step === 3 && (
         <div className="space-y-4 rounded-xl border bg-brand-white p-6">
-          <AIThinkingOverlay loading={loading} text={!loading ? aiText : undefined} />
-          {checklist.length > 0 && (
-            <ul className="text-sm space-y-1">
-              {checklist.map((c, i) => (
-                <li key={i} className={c.passed ? 'text-brand-green' : 'text-red-600'}>
-                  {c.passed ? '✓' : '✗'} {c.item}
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {tags.map((t) => (
-              <span
-                key={t}
-                className="rounded-full bg-brand-blue-light text-brand-blue-dark px-2 py-0.5 text-xs"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
           <label htmlFor="api-class" className="text-sm font-medium">
-            Classification <AIBadge label="AI-8" />
+            Classification <span className="text-red-500">*</span>
           </label>
           <select
             id="api-class"
@@ -372,7 +441,7 @@ export function RegisterApiPage({
           </select>
           <p className="text-xs text-slate-500">{CLASSIFICATIONS[classification].handling}</p>
           <label htmlFor="api-tier" className="text-sm font-medium">
-            Gateway tier
+            Gateway tier <span className="text-red-500">*</span>
           </label>
           <select
             id="api-tier"
@@ -430,13 +499,8 @@ export function RegisterApiPage({
             </div>
           )}
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              disabled={busy}
-              className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
-            >
-              Back
+            <button type="button" onClick={() => setStep(2)} className={backButtonClass}>
+              ← Back
             </button>
             <button
               type="button"
@@ -445,7 +509,7 @@ export function RegisterApiPage({
                 setSdkArtifacts(null);
                 setStep(4);
               }}
-              disabled={busy || !parsedSpec?.content}
+              disabled={!patchedSpecContent}
               className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
             >
               Continue to SDK Review
@@ -454,9 +518,9 @@ export function RegisterApiPage({
         </div>
       )}
 
-      {step === 4 && parsedSpec?.content && (
+      {step === 4 && patchedSpecContent && (
         <SdkReviewStep
-          openapiSpecContent={parsedSpec.content}
+          openapiSpecContent={patchedSpecContent}
           apiName={name}
           approved={sdkApproved}
           onApproved={handleSdkApproved}
@@ -471,14 +535,19 @@ export function RegisterApiPage({
               <p className="text-sm text-slate-600">
                 SDK snippets approved. Submit your API proposal for admin review.
               </p>
-              <button
-                type="button"
-                onClick={submit}
-                disabled={submitting || !sdkApproved}
-                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-              >
-                {submitting ? 'Submitting…' : 'Submit proposal'}
-              </button>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setStep(4)} className={backButtonClass}>
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  onClick={submit}
+                  disabled={submitting || !sdkApproved || hardBlockersActive}
+                  className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+                >
+                  {submitting ? 'Submitting…' : 'Submit proposal'}
+                </button>
+              </div>
             </>
           ) : (
             <div className="space-y-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
@@ -498,14 +567,19 @@ export function RegisterApiPage({
                 />{' '}
                 I reviewed similar APIs and confirm a new API is needed
               </label>
-              <button
-                type="button"
-                onClick={submit}
-                disabled={!confirmedDup || submitting}
-                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-              >
-                {submitting ? 'Submitting…' : 'Confirm & Submit'}
-              </button>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setStep(4)} className={backButtonClass}>
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  onClick={submit}
+                  disabled={!confirmedDup || submitting || hardBlockersActive}
+                  className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+                >
+                  {submitting ? 'Submitting…' : 'Confirm & Submit'}
+                </button>
+              </div>
             </div>
           )}
         </div>
