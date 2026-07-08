@@ -39,7 +39,7 @@ export function MyApisPage() {
           to={ROUTES.provider.register}
           className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm"
         >
-          Register API
+          Publish API
         </Link>
       </div>
       <ListFilterBar

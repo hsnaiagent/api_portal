@@ -249,7 +249,7 @@ export function RegisterApiPage({
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Register API</h1>
+      <h1 className="text-2xl font-bold">Publish API</h1>
       <div className="flex gap-2 text-sm flex-wrap">
         {[1, 2, 3, 4, 5].map((s) => (
           <span

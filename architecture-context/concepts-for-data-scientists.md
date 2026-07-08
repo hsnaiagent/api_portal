@@ -356,7 +356,7 @@ Each concept includes:
 
 **Analogy:** Like **project roles** in a data platform — viewer, editor, admin — but for portal actions.
 
-**Role in this project:** Determines who can register APIs, approve publishing, view audit logs, etc.
+**Role in this project:** Determines who can publish APIs, approve publishing, view audit logs, etc.
 
 ---
 

@@ -271,7 +271,7 @@ Portal selects workflow template based on API classification:
 
 ---
 
-### GW-4: Register API Route (Tier 2+)
+### GW-4: Publish API Route (Tier 2+)
 
 **Direction:** Portal → Gateway
 

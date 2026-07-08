@@ -101,7 +101,7 @@ Each domain has independently developed **thousands of REST APIs** over time, wi
 
 | Stakeholder Group | Interest |
 |-------------------|----------|
-| API Providers (domain teams) | Register APIs, manage lifecycle, approve/reject consumers |
+| API Providers (domain teams) | Publish APIs, manage lifecycle, approve/reject consumers |
 | API Consumers (developers, teams) | Discover, request access, consume, test |
 | Data Owners | Approve access to sensitive data via workflow engine |
 | Platform Team | Build and operate portal and gateway |

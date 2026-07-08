@@ -85,7 +85,7 @@ function buildDeveloperNav(providerDomains: string[]): NavSection[] {
 
     sections.push({
       type: 'item',
-      item: { to: ROUTES.provider.register, label: 'Register API', icon: PlusCircle },
+      item: { to: ROUTES.provider.register, label: 'Publish API', icon: PlusCircle },
     });
 
     sections.push({

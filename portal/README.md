@@ -15,7 +15,7 @@ Open http://localhost:5173 — use demo personas on the login screen or OAuth2 s
 ## Features
 
 - **Consumer:** Catalog, AI Application Planner, subscriptions, applications, API detail (Overview, Docs, Sandbox, SDK)
-- **Provider:** Register API (AI-assisted), lifecycle management, consumer request approvals
+- **Provider:** Publish API (AI-assisted), lifecycle management, consumer request approvals
 - **Admin:** Proposals queue, publishing queue, RBAC view, audit log with AI anomaly alerts
 - **AI:** All 15 embedding points simulated via `src/mocks/AIAdapter.ts`
 - **Configurable:** Brand, domains, classification, lifecycle, AI flags in `src/config/`
