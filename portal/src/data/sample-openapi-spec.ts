@@ -6,7 +6,7 @@ const SAMPLE_OPENAPI_SPEC = {
     description:
       'Provides employee benefits enrollment, plan lookup, and status queries for HR systems.',
   },
-  servers: [{ url: 'https://apis.aramco.com/hr-benefits' }],
+  servers: [{ url: 'https://apis.example.com/hr-benefits' }],
   paths: {
     '/v1/benefits': {
       get: {
