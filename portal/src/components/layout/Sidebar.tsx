@@ -158,7 +158,7 @@ export function Sidebar() {
   return (
     <aside className="w-64 shrink-0 border-r border-slate-200 bg-brand-white flex flex-col">
       <div className="p-4 border-b border-slate-100">
-        <img src={BRAND.logoPath} alt={BRAND.name} className="h-8" />
+        <img src={BRAND.greenLogoPath} alt={BRAND.name} className="h-8" />
 
         <p className="text-xs text-slate-500 mt-2">{BRAND.tagline}</p>
       </div>

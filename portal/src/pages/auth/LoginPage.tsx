@@ -88,7 +88,7 @@ export function LoginPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-brand-green via-brand-green to-brand-blue-dark text-brand-white flex-col justify-center p-12">
         <img
-          src={BRAND.logoPath}
+          src={BRAND.greenLogoPath}
           alt={BRAND.name}
           className="mb-6 h-16 w-auto max-w-full object-contain drop-shadow-sm"
         />
@@ -103,7 +103,7 @@ export function LoginPage() {
         <div className="w-full max-w-lg space-y-6">
           <div className="lg:hidden text-center mb-6">
             <img
-              src={BRAND.logoPath}
+              src={BRAND.greenLogoPath}
               alt={BRAND.name}
               className="mx-auto h-12 w-auto max-w-full object-contain drop-shadow-sm"
             />

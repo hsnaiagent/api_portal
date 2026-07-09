@@ -1,8 +1,10 @@
 import { BRAND_COLORS, BRAND_COLOR_SOURCE, BRAND_DERIVED } from './brand-colors';
+import greenLogoSvg from '../../public/portal-logo(t).svg?url';
 
 export const BRAND = {
   name: 'API Portal',
   logoPath: '/portal-logo.webp',
+  greenLogoPath: greenLogoSvg,
   colorSource: BRAND_COLOR_SOURCE,
   colors: BRAND_COLORS,
   tagline: 'Discover. Govern. Connect.',
