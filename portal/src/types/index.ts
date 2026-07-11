@@ -381,12 +381,18 @@ export interface AIResponse {
   links?: { label: string; path: string }[];
 }
 
+export type CatalogSortKey = 'relevance' | 'name' | 'domain';
+
 export interface CatalogFilters {
   query: string;
 
-  domainFilter: string;
+  domains: string[];
 
-  classFilter: string;
+  classifications: Classification[];
+
+  sort: CatalogSortKey;
+
+  aiEnabled: boolean;
 
   aiContext?: string;
 }

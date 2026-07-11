@@ -13,11 +13,31 @@ import type { PrecomputedSdkResult } from '@/lib/sdk-api';
 import { SdkReviewStep } from '@/components/sdk/SdkReviewStep';
 import { ReadinessChecklist } from '@/components/register/ReadinessChecklist';
 import { AIBadge } from '@/components/ai/AIBadge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Stepper } from '@/components/ui/stepper';
+import { Textarea } from '@/components/ui/textarea';
 import { useNotify } from '@/hooks/useNotify';
 import { CLASSIFICATIONS } from '@/config/classification';
 import { ROUTES } from '@/config/routes';
 import { SAMPLE_OPENAPI_SPEC_JSON } from '@/data/sample-openapi-spec';
 import type { API, ApiSdkArtifacts, Classification } from '@/types';
+
+const WIZARD_STEPS = [
+  { id: 1, label: 'OpenAPI spec' },
+  { id: 2, label: 'API details' },
+  { id: 3, label: 'Classification' },
+  { id: 4, label: 'SDK review' },
+  { id: 5, label: 'Submit' },
+] as const;
 
 export function RegisterApiPage({
   fixedDomainId,
@@ -52,16 +72,17 @@ export function RegisterApiPage({
 
   const specInfo = describeSpec(spec);
   const parsedSpec = spec.trim() ? parseOpenApiSpecContent(spec) : null;
+  const specContent = parsedSpec?.content ?? null;
 
   const patchedSpecContent = useMemo(() => {
-    if (!parsedSpec?.content) return null;
-    return patchSpecContent(parsedSpec.content, {
+    if (!specContent) return null;
+    return patchSpecContent(specContent, {
       name: name.trim(),
       description: description.trim(),
       version: version.trim() || '1.0.0',
       backendUrl: targetUrl.trim(),
     });
-  }, [parsedSpec?.content, name, description, version, targetUrl]);
+  }, [specContent, name, description, version, targetUrl]);
 
   const verificationComplete =
     name.trim() &&
@@ -244,278 +265,285 @@ export function RegisterApiPage({
     }
   };
 
-  const backButtonClass =
-    'rounded-lg border-2 border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50';
-
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Publish API</h1>
-      <div className="flex gap-2 text-sm flex-wrap">
-        {[1, 2, 3, 4, 5].map((s) => (
-          <span
-            key={s}
-            className={`px-3 py-1 rounded-full ${step === s ? 'bg-brand-green text-brand-white' : 'bg-slate-100'}`}
-          >
-            Step {s}
-          </span>
-        ))}
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">Publish API</h1>
+      <Stepper steps={[...WIZARD_STEPS]} currentStep={step} />
 
       {step === 1 && (
-        <div className="space-y-4 rounded-xl border bg-brand-white p-6">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <label htmlFor="api-spec" className="block text-sm font-medium">
-              OpenAPI spec (JSON) <span className="text-red-500">*</span>
-            </label>
-            <button
-              type="button"
-              onClick={() => setSpec(SAMPLE_OPENAPI_SPEC_JSON)}
-              className="text-sm text-brand-blue hover:underline font-medium"
-            >
-              Try with a sample API
-            </button>
-          </div>
-          <textarea
-            id="api-spec"
-            value={spec}
-            onChange={(e) => setSpec(e.target.value)}
-            placeholder='Paste OpenAPI 3.0 spec as JSON — e.g. { "openapi": "3.0.3", "paths": { ... } }'
-            rows={10}
-            className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
-          />
-          {spec.trim() && (
-            <p className={`text-xs ${specInfo.ok ? 'text-slate-500' : 'text-red-600'}`}>
-              {specInfo.note}
-            </p>
-          )}
-          <div className="flex items-center gap-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json,application/json"
-              className="hidden"
-              onChange={onSpecFileChange}
+        <Card>
+          <CardContent className="space-y-4 pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label htmlFor="api-spec" className="block text-sm font-medium text-foreground">
+                OpenAPI spec (JSON) <span className="text-destructive">*</span>
+              </label>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={() => setSpec(SAMPLE_OPENAPI_SPEC_JSON)}
+              >
+                Try with a sample API
+              </Button>
+            </div>
+            <Textarea
+              id="api-spec"
+              value={spec}
+              onChange={(e) => setSpec(e.target.value)}
+              placeholder='Paste OpenAPI 3.0 spec as JSON — e.g. { "openapi": "3.0.3", "paths": { ... } }'
+              rows={10}
+              className="font-mono"
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50"
-            >
-              Upload JSON file
-            </button>
-            <p className="text-xs text-slate-500">
-              The OpenAPI specification is the source of truth for registration.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(successRoute ?? ROUTES.provider.myApis)}
-              className={backButtonClass}
-            >
-              ← Back
-            </button>
-            <button
-              type="button"
-              onClick={onSpecContinue}
-              disabled={!spec.trim() || !specInfo.ok}
-              className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
+            {spec.trim() && (
+              <p className={`text-xs ${specInfo.ok ? 'text-muted-foreground' : 'text-destructive'}`}>
+                {specInfo.note}
+              </p>
+            )}
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={onSpecFileChange}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Upload JSON file
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                The OpenAPI specification is the source of truth for registration.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate(successRoute ?? ROUTES.provider.myApis)}
+              >
+                ← Back
+              </Button>
+              <Button
+                type="button"
+                onClick={onSpecContinue}
+                disabled={!spec.trim() || !specInfo.ok}
+              >
+                Continue
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {step === 2 && (
-        <div className="space-y-4 rounded-xl border bg-brand-white p-6">
-          <p className="text-sm text-slate-600">
-            Review the values extracted from your OpenAPI spec. Edit any field if needed.
-          </p>
-          <div>
-            <label htmlFor="api-name" className="block text-sm font-medium mb-1">
-              API Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="api-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="API name"
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              This is the visible name shown on the portal.
+        <Card>
+          <CardContent className="space-y-4 pt-6">
+            <p className="text-sm text-muted-foreground">
+              Review the values extracted from your OpenAPI spec. Edit any field if needed.
             </p>
-          </div>
-          <div>
-            <label htmlFor="api-description" className="block text-sm font-medium mb-1">
-              Description <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              id="api-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description"
-              rows={4}
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label htmlFor="api-version" className="block text-sm font-medium mb-1">
-              Version <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="api-version"
-              value={version}
-              onChange={(e) => setVersion(e.target.value)}
-              placeholder="1.0.0"
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label htmlFor="api-target-url" className="block text-sm font-medium mb-1">
-              Target URL <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="api-target-url"
-              value={targetUrl}
-              onChange={(e) => setTargetUrl(e.target.value)}
-              placeholder="https://apis.example.com/service"
-              className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
-            />
-            <p className="text-xs text-slate-500 mt-1">Upstream routing server URL from the spec.</p>
-          </div>
-          <div>
-            <label htmlFor="api-basepath" className="block text-sm font-medium mb-1">
-              Basepath <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="api-basepath"
-              value={basepath}
-              onChange={(e) => setBasepath(e.target.value)}
-              placeholder="/v1/my-api"
-              className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
-            />
-            <p className="text-xs text-slate-500 mt-1">Gateway path prefix for this API.</p>
-          </div>
+            <div>
+              <label htmlFor="api-name" className="mb-1 block text-sm font-medium text-foreground">
+                API Name <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="api-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="API name"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                This is the visible name shown on the portal.
+              </p>
+            </div>
+            <div>
+              <label
+                htmlFor="api-description"
+                className="mb-1 block text-sm font-medium text-foreground"
+              >
+                Description <span className="text-destructive">*</span>
+              </label>
+              <Textarea
+                id="api-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Description"
+                rows={4}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="api-version"
+                className="mb-1 block text-sm font-medium text-foreground"
+              >
+                Version <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="api-version"
+                value={version}
+                onChange={(e) => setVersion(e.target.value)}
+                placeholder="1.0.0"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="api-target-url"
+                className="mb-1 block text-sm font-medium text-foreground"
+              >
+                Target URL <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="api-target-url"
+                value={targetUrl}
+                onChange={(e) => setTargetUrl(e.target.value)}
+                placeholder="https://apis.example.com/service"
+                className="font-mono"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Upstream routing server URL from the spec.
+              </p>
+            </div>
+            <div>
+              <label
+                htmlFor="api-basepath"
+                className="mb-1 block text-sm font-medium text-foreground"
+              >
+                Basepath <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="api-basepath"
+                value={basepath}
+                onChange={(e) => setBasepath(e.target.value)}
+                placeholder="/v1/my-api"
+                className="font-mono"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">Gateway path prefix for this API.</p>
+            </div>
 
-          <ReadinessChecklist
-            targetUrl={targetUrl}
-            basepath={basepath}
-            specContent={parsedSpec?.content ?? null}
-            onBlockersChange={setHardBlockersActive}
-          />
+            <ReadinessChecklist
+              targetUrl={targetUrl}
+              basepath={basepath}
+              specContent={parsedSpec?.content ?? null}
+              onBlockersChange={setHardBlockersActive}
+            />
 
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setStep(1)} className={backButtonClass}>
-              ← Back
-            </button>
-            <button
-              type="button"
-              onClick={() => setStep(3)}
-              disabled={!verificationComplete || hardBlockersActive}
-              className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+                ← Back
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setStep(3)}
+                disabled={!verificationComplete || hardBlockersActive}
+              >
+                Continue
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {step === 3 && (
-        <div className="space-y-4 rounded-xl border bg-brand-white p-6">
-          <label htmlFor="api-class" className="text-sm font-medium">
-            Classification <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="api-class"
-            value={classification}
-            onChange={(e) => setClassification(e.target.value as Classification)}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
-          >
-            {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
-              <option key={c} value={c}>
-                {CLASSIFICATIONS[c].label}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-slate-500">{CLASSIFICATIONS[classification].handling}</p>
-          <label htmlFor="api-tier" className="text-sm font-medium">
-            Gateway tier <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="api-tier"
-            value={tier}
-            onChange={(e) => setTier(Number(e.target.value) as 1 | 2 | 3)}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
-          >
-            <option value={1}>Tier 1 — Metadata only</option>
-            <option value={2}>Tier 2 — Gateway proxied</option>
-            <option value={3}>Tier 3 — Gateway native</option>
-          </select>
-          {llmMode && (
-            <div className="rounded-lg border border-brand-blue/30 bg-brand-blue-light/40 p-4 space-y-3">
-              <p className="text-sm font-medium text-brand-blue-dark">LLM configuration</p>
-              <div>
-                <label htmlFor="llm-model" className="block text-sm font-medium mb-1">
-                  Model
-                </label>
-                <input
-                  id="llm-model"
-                  value={llmModel}
-                  onChange={(e) => setLlmModel(e.target.value)}
-                  placeholder="e.g. gpt-4o, claude-3.5, internal-rag-v2"
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="llm-rate" className="block text-sm font-medium mb-1">
-                  Rate limit (requests/min)
-                </label>
-                <input
-                  id="llm-rate"
-                  type="number"
-                  min={0}
-                  value={llmRateLimit}
-                  onChange={(e) => setLlmRateLimit(e.target.value)}
-                  placeholder="e.g. 60"
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="llm-budget" className="block text-sm font-medium mb-1">
-                  Monthly token budget
-                </label>
-                <input
-                  id="llm-budget"
-                  type="number"
-                  min={0}
-                  value={llmTokenBudget}
-                  onChange={(e) => setLlmTokenBudget(e.target.value)}
-                  placeholder="e.g. 5000000"
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-          )}
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setStep(2)} className={backButtonClass}>
-              ← Back
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSdkApproved(false);
-                setSdkArtifacts(null);
-                setStep(4);
-              }}
-              disabled={!patchedSpecContent}
-              className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+        <Card>
+          <CardContent className="space-y-4 pt-6">
+            <label htmlFor="api-class" className="text-sm font-medium text-foreground">
+              Classification <span className="text-destructive">*</span>
+            </label>
+            <Select
+              value={classification}
+              onValueChange={(v) => v && setClassification(v as Classification)}
             >
-              Continue to SDK Review
-            </button>
-          </div>
-        </div>
+              <SelectTrigger id="api-class" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {CLASSIFICATIONS[c].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{CLASSIFICATIONS[classification].handling}</p>
+            <label htmlFor="api-tier" className="text-sm font-medium text-foreground">
+              Gateway tier <span className="text-destructive">*</span>
+            </label>
+            <Select
+              value={String(tier)}
+              onValueChange={(v) => v && setTier(Number(v) as 1 | 2 | 3)}
+            >
+              <SelectTrigger id="api-tier" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Tier 1 — Metadata only</SelectItem>
+                <SelectItem value="2">Tier 2 — Gateway proxied</SelectItem>
+                <SelectItem value="3">Tier 3 — Gateway native</SelectItem>
+              </SelectContent>
+            </Select>
+            {llmMode && (
+              <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-4">
+                <p className="text-sm font-medium text-foreground">LLM configuration</p>
+                <div>
+                  <label htmlFor="llm-model" className="mb-1 block text-sm font-medium text-foreground">
+                    Model
+                  </label>
+                  <Input
+                    id="llm-model"
+                    value={llmModel}
+                    onChange={(e) => setLlmModel(e.target.value)}
+                    placeholder="e.g. gpt-4o, claude-3.5, internal-rag-v2"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="llm-rate" className="mb-1 block text-sm font-medium text-foreground">
+                    Rate limit (requests/min)
+                  </label>
+                  <Input
+                    id="llm-rate"
+                    type="number"
+                    min={0}
+                    value={llmRateLimit}
+                    onChange={(e) => setLlmRateLimit(e.target.value)}
+                    placeholder="e.g. 60"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="llm-budget" className="mb-1 block text-sm font-medium text-foreground">
+                    Monthly token budget
+                  </label>
+                  <Input
+                    id="llm-budget"
+                    type="number"
+                    min={0}
+                    value={llmTokenBudget}
+                    onChange={(e) => setLlmTokenBudget(e.target.value)}
+                    placeholder="e.g. 5000000"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button type="button" variant="secondary" onClick={() => setStep(2)}>
+                ← Back
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setSdkApproved(false);
+                  setSdkArtifacts(null);
+                  setStep(4);
+                }}
+                disabled={!patchedSpecContent}
+              >
+                Continue to SDK Review
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {step === 4 && patchedSpecContent && (
@@ -529,60 +557,63 @@ export function RegisterApiPage({
       )}
 
       {step === 5 && (
-        <div className="space-y-4 rounded-xl border bg-brand-white p-6">
-          {duplicates.length === 0 ? (
-            <>
-              <p className="text-sm text-slate-600">
-                SDK snippets approved. Submit your API proposal for admin review.
-              </p>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setStep(4)} className={backButtonClass}>
-                  ← Back
-                </button>
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={submitting || !sdkApproved || hardBlockersActive}
-                  className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-                >
-                  {submitting ? 'Submitting…' : 'Submit proposal'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="space-y-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
-              <h3 className="font-semibold flex items-center gap-2">
-                <AIBadge label="AI-9" /> Similar APIs found
-              </h3>
-              {duplicates.map((d) => (
-                <p key={d.id} className="text-sm">
-                  {d.label} ({d.score}% — {d.reason})
+        <Card>
+          <CardContent className="space-y-4 pt-6">
+            {duplicates.length === 0 ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  SDK snippets approved. Submit your API proposal for admin review.
                 </p>
-              ))}
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={confirmedDup}
-                  onChange={(e) => setConfirmedDup(e.target.checked)}
-                />{' '}
-                I reviewed similar APIs and confirm a new API is needed
-              </label>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setStep(4)} className={backButtonClass}>
-                  ← Back
-                </button>
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={!confirmedDup || submitting || hardBlockersActive}
-                  className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-                >
-                  {submitting ? 'Submitting…' : 'Confirm & Submit'}
-                </button>
+                <div className="flex gap-2">
+                  <Button type="button" variant="secondary" onClick={() => setStep(4)}>
+                    ← Back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={submit}
+                    disabled={submitting || !sdkApproved || hardBlockersActive}
+                    loading={submitting}
+                  >
+                    {submitting ? 'Submitting…' : 'Submit proposal'}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4 rounded-lg border border-status-warning/30 bg-status-warning/10 p-4">
+                <h3 className="flex items-center gap-2 font-semibold text-foreground">
+                  <AIBadge label="AI-9" /> Similar APIs found
+                </h3>
+                {duplicates.map((d) => (
+                  <p key={d.id} className="text-sm text-foreground">
+                    {d.label} ({d.score}% — {d.reason})
+                  </p>
+                ))}
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={confirmedDup}
+                    onChange={(e) => setConfirmedDup(e.target.checked)}
+                    className="rounded border-input"
+                  />
+                  I reviewed similar APIs and confirm a new API is needed
+                </label>
+                <div className="flex gap-2">
+                  <Button type="button" variant="secondary" onClick={() => setStep(4)}>
+                    ← Back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={submit}
+                    disabled={!confirmedDup || submitting || hardBlockersActive}
+                    loading={submitting}
+                  >
+                    {submitting ? 'Submitting…' : 'Confirm & Submit'}
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

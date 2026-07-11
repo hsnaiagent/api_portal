@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { Inbox } from 'lucide-react';
+
 import { usePortal } from '@/store/AppStore';
 import { getUserById } from '@/data/users';
 import { getApiById } from '@/data/apis';
@@ -7,6 +9,31 @@ import { ListFilterBar } from '@/components/shared/ListFilterBar';
 import { useNotify } from '@/hooks/useNotify';
 import { provisionSubscription } from '@/mocks/GatewayAdapter';
 import { calculateLlmAnnualSpending, formatLlmAnnualSpending } from '@/lib/roles';
+import { llmRequestBadgeVariant } from '@/lib/catalog-badges';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FilterSelect } from '@/components/ui/filter-select';
+import { Input } from '@/components/ui/input';
+import type { LLMSubscriptionRequest } from '@/types';
+
+type RequestAction = 'approve' | 'reject';
+
+type DialogState = {
+  llmRequestId: string;
+  subscriptionId: string;
+  action: RequestAction;
+};
+
+type QueueState = {
+  dialog: DialogState | null;
+  processingId: string | null;
+};
+
+const idleQueue: QueueState = { dialog: null, processingId: null };
 
 export function LLMSubscriptionQueuePage() {
   const { state, dispatch } = usePortal();
@@ -14,10 +41,8 @@ export function LLMSubscriptionQueuePage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [comment, setComment] = useState<Record<string, string>>({});
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
-    'all',
-  );
-  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [queue, setQueue] = useState<QueueState>(idleQueue);
 
   const audit = (action: string, llmRequestId: string) => {
     if (!state.currentUser) return;
@@ -67,55 +92,43 @@ export function LLMSubscriptionQueuePage() {
     [reviewed, query, statusFilter],
   );
 
-  const hasActiveFilters = Boolean(query || statusFilter !== 'all');
+  const hasActiveFilters = Boolean(query || statusFilter);
 
-  const approve = async (llmRequestId: string, subscriptionId: string) => {
+  const approveRequest = async (llmRequestId: string, subscriptionId: string) => {
     if (!state.currentUser) return;
     const sub = state.subscriptions.find((s) => s.subscription_id === subscriptionId);
-    setProcessingId(llmRequestId);
-    try {
-      if (sub) await provisionSubscription(sub);
+    if (sub) await provisionSubscription(sub);
+    dispatch({
+      type: 'UPDATE_LLM_REQUEST',
+      payload: {
+        llm_request_id: llmRequestId,
+        patch: {
+          status: 'approved',
+          reviewer_id: state.currentUser.user_id,
+          reviewer_comment: comment[llmRequestId] || 'Approved',
+          reviewed_at: new Date().toISOString(),
+        },
+      },
+    });
+    if (sub) {
       dispatch({
-        type: 'UPDATE_LLM_REQUEST',
+        type: 'UPDATE_SUBSCRIPTION',
         payload: {
-          llm_request_id: llmRequestId,
+          subscription_id: subscriptionId,
           patch: {
-            status: 'approved',
-            reviewer_id: state.currentUser.user_id,
-            reviewer_comment: comment[llmRequestId] || 'Approved',
-            reviewed_at: new Date().toISOString(),
+            status: 'active',
+            provider_status: 'accepted',
+            approved_at: new Date().toISOString(),
           },
         },
       });
-      if (sub) {
-        dispatch({
-          type: 'UPDATE_SUBSCRIPTION',
-          payload: {
-            subscription_id: subscriptionId,
-            patch: {
-              status: 'active',
-              provider_status: 'accepted',
-              approved_at: new Date().toISOString(),
-            },
-          },
-        });
-      }
-      audit('llm_access.approved', llmRequestId);
-      notify(
-        'LLM access approved',
-        'Subscription activated and credentials provisioned.',
-        'success',
-      );
-    } catch {
-      notify('Approval failed', 'Could not provision the subscription. Please try again.', 'error');
-    } finally {
-      setProcessingId(null);
     }
+    audit('llm_access.approved', llmRequestId);
+    notify('LLM access approved', 'Subscription activated and credentials provisioned.', 'success');
   };
 
-  const reject = (llmRequestId: string, subscriptionId: string) => {
+  const rejectRequest = (llmRequestId: string, subscriptionId: string) => {
     if (!state.currentUser) return;
-    if (!window.confirm('Reject this LLM access request? The developer will be notified.')) return;
     dispatch({
       type: 'UPDATE_LLM_REQUEST',
       payload: {
@@ -139,11 +152,81 @@ export function LLMSubscriptionQueuePage() {
     notify('LLM access rejected', 'Developer has been notified.', 'warning');
   };
 
+  const openDialog = (llmRequestId: string, subscriptionId: string, action: RequestAction) => {
+    if (queue.dialog !== null) return;
+    if (queue.processingId === llmRequestId) return;
+    setQueue((prev) => ({ ...prev, dialog: { llmRequestId, subscriptionId, action } }));
+  };
+
+  const closeDialog = () => {
+    setQueue((prev) => ({ ...prev, dialog: null }));
+  };
+
+  const isRowBusy = (llmRequestId: string) =>
+    queue.dialog?.llmRequestId === llmRequestId || queue.processingId === llmRequestId;
+
+  const handleConfirm = async () => {
+    const dialog = queue.dialog;
+    if (!dialog || queue.processingId !== null) return;
+
+    const { llmRequestId, subscriptionId, action } = dialog;
+    setQueue((prev) => ({ ...prev, processingId: llmRequestId }));
+
+    try {
+      if (action === 'approve') {
+        await approveRequest(llmRequestId, subscriptionId);
+      } else {
+        rejectRequest(llmRequestId, subscriptionId);
+      }
+      setQueue(idleQueue);
+    } catch {
+      setQueue((prev) => ({ ...prev, processingId: null }));
+      notify('Approval failed', 'Could not provision the subscription. Please try again.', 'error');
+    }
+  };
+
+  const dialogReq = queue.dialog
+    ? state.llmSubscriptionRequests.find((r) => r.llm_request_id === queue.dialog?.llmRequestId)
+    : null;
+  const isApprove = queue.dialog?.action === 'approve';
+  const dialogPending =
+    queue.dialog !== null && queue.processingId === queue.dialog.llmRequestId;
+
+  const reviewedColumns = useMemo<DataTableColumn<LLMSubscriptionRequest>[]>(
+    () => [
+      {
+        id: 'use_case',
+        header: 'Use case',
+        cell: (r) => r.use_case_name,
+      },
+      {
+        id: 'requester',
+        header: 'Requester',
+        cell: (r) => getUserById(r.requested_by_user_id)?.display_name ?? '—',
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        cell: (r) => (
+          <Badge variant={llmRequestBadgeVariant(r.status)} withDot>
+            {r.status}
+          </Badge>
+        ),
+      },
+      {
+        id: 'spend',
+        header: 'Est. API spend',
+        cell: (r) => formatLlmAnnualSpending(calculateLlmAnnualSpending(r).annualSpendingUsd),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">LLM Access Requests</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">LLM Access Requests</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Review ROI-justified LLM API access requests before approving subscriptions.
         </p>
       </div>
@@ -155,135 +238,171 @@ export function LLMSubscriptionQueuePage() {
         hasActiveFilters={hasActiveFilters}
         onClear={() => {
           setQuery('');
-          setStatusFilter('all');
+          setStatusFilter('');
         }}
         resultLabel={`${filteredPending.length} pending · ${filteredReviewed.length} reviewed`}
       >
-        <select
+        <FilterSelect
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="all">All statuses</option>
-          <option value="pending">Pending only</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
+          onChange={setStatusFilter}
+          placeholder="All statuses"
+          options={[
+            { value: 'pending', label: 'Pending only' },
+            { value: 'approved', label: 'Approved' },
+            { value: 'rejected', label: 'Rejected' },
+          ]}
+          className="w-40"
+        />
       </ListFilterBar>
 
-      <div className="rounded-xl border bg-brand-white overflow-hidden">
-        <div className="px-4 py-3 border-b bg-slate-50">
-          <h2 className="font-semibold text-sm">Pending ({filteredPending.length})</h2>
-        </div>
+      <Card>
+        <CardHeader className="border-b border-border py-4">
+          <CardTitle className="text-sm">Pending ({filteredPending.length})</CardTitle>
+        </CardHeader>
         {filteredPending.length === 0 ? (
-          <p className="p-6 text-sm text-slate-500">
-            No pending LLM access requests match your filters.
-          </p>
+          <EmptyState
+            icon={<Inbox />}
+            title="No pending LLM access requests"
+            description={
+              hasActiveFilters
+                ? 'No pending requests match your filters.'
+                : 'When developers submit LLM access requests, they will appear here for review.'
+            }
+            action={
+              hasActiveFilters ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setQuery('');
+                    setStatusFilter('');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {filteredPending.map((req) => {
               const user = getUserById(req.requested_by_user_id);
               const api = getApiById(req.api_id);
               const isOpen = expanded === req.llm_request_id;
+              const rowBusy = isRowBusy(req.llm_request_id);
+              const rowProcessing = queue.processingId === req.llm_request_id;
+
               return (
-                <div key={req.llm_request_id} className="p-4 space-y-3">
+                <CardContent key={req.llm_request_id} className="space-y-3 p-4">
                   <button
                     type="button"
                     onClick={() => setExpanded(isOpen ? null : req.llm_request_id)}
-                    className="w-full text-left flex flex-wrap justify-between gap-2"
+                    className="flex w-full flex-wrap justify-between gap-2 text-left"
                   >
                     <div>
-                      <p className="font-semibold">{req.use_case_name}</p>
-                      <p className="text-sm text-slate-500">
+                      <p className="font-semibold text-foreground">{req.use_case_name}</p>
+                      <p className="text-sm text-muted-foreground">
                         {user?.display_name} · {api?.name} ·{' '}
                         {formatLlmAnnualSpending(calculateLlmAnnualSpending(req).annualSpendingUsd)}
                       </p>
                     </div>
-                    <span className="text-xs text-brand-blue">
+                    <span className="text-xs text-link">
                       {isOpen ? 'Hide details' : 'Show details'}
                     </span>
                   </button>
                   {isOpen && (
-                    <div className="rounded-lg border bg-slate-50 p-4">
+                    <div className="rounded-lg border border-border bg-muted/40 p-4">
                       <LLMSubscriptionForm value={req} onChange={() => {}} readOnly showRoi />
                     </div>
                   )}
-                  <input
+                  <Input
                     type="text"
                     placeholder="Reviewer comment (optional)"
                     value={comment[req.llm_request_id] ?? ''}
                     onChange={(e) =>
                       setComment({ ...comment, [req.llm_request_id]: e.target.value })
                     }
-                    className="w-full rounded-lg border px-3 py-2 text-sm bg-brand-white"
                   />
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="button"
-                      onClick={() => approve(req.llm_request_id, req.subscription_id)}
-                      disabled={processingId === req.llm_request_id}
-                      className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
+                      onClick={() =>
+                        openDialog(req.llm_request_id, req.subscription_id, 'approve')
+                      }
+                      disabled={rowBusy}
+                      loading={rowProcessing && queue.dialog?.action === 'approve'}
                     >
-                      {processingId === req.llm_request_id ? 'Provisioning…' : 'Approve'}
-                    </button>
-                    <button
+                      {rowProcessing && queue.dialog?.action === 'approve'
+                        ? 'Provisioning…'
+                        : 'Approve'}
+                    </Button>
+                    <Button
                       type="button"
-                      onClick={() => reject(req.llm_request_id, req.subscription_id)}
-                      disabled={processingId === req.llm_request_id}
-                      className="rounded-lg border border-red-200 text-red-700 px-4 py-2 text-sm disabled:opacity-50"
+                      variant="secondary"
+                      onClick={() =>
+                        openDialog(req.llm_request_id, req.subscription_id, 'reject')
+                      }
+                      disabled={rowBusy}
+                      className="border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                     >
                       Reject
-                    </button>
+                    </Button>
                   </div>
-                </div>
+                </CardContent>
               );
             })}
           </div>
         )}
-      </div>
+      </Card>
 
       {reviewed.length > 0 && (
-        <div className="rounded-xl border bg-brand-white overflow-hidden">
-          <div className="px-4 py-3 border-b bg-slate-50">
-            <h2 className="font-semibold text-sm">Review history</h2>
-          </div>
-          <table className="w-full text-sm">
-            <thead className="text-left text-slate-500">
-              <tr>
-                <th className="px-4 py-2">Use case</th>
-                <th className="px-4 py-2">Requester</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Est. API spend</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredReviewed.map((r) => (
-                <tr key={r.llm_request_id} className="border-t">
-                  <td className="px-4 py-3">{r.use_case_name}</td>
-                  <td className="px-4 py-3">{getUserById(r.requested_by_user_id)?.display_name}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${r.status === 'approved' ? 'bg-brand-green-light text-brand-green' : 'bg-red-100 text-red-700'}`}
-                    >
-                      {r.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {formatLlmAnnualSpending(calculateLlmAnnualSpending(r).annualSpendingUsd)}
-                  </td>
-                </tr>
-              ))}
-              {filteredReviewed.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
-                    No reviewed requests match your filters.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">Review history</h2>
+          <DataTable
+            columns={reviewedColumns}
+            data={filteredReviewed}
+            keyExtractor={(r) => r.llm_request_id}
+            emptyTitle="No reviewed requests match your filters"
+            emptyDescription="Try adjusting your search or filter criteria."
+            emptyAction={
+              hasActiveFilters ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setQuery('');
+                    setStatusFilter('');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
+          />
         </div>
       )}
+
+      <ConfirmDialog
+        open={queue.dialog !== null}
+        onOpenChange={(open) => {
+          if (!open && !dialogPending) closeDialog();
+        }}
+        title={
+          isApprove
+            ? `Approve access for "${dialogReq?.use_case_name ?? 'this use case'}"?`
+            : `Reject access for "${dialogReq?.use_case_name ?? 'this use case'}"?`
+        }
+        description={
+          isApprove
+            ? 'The subscription will be activated and credentials provisioned via the gateway.'
+            : 'The developer will be notified that their LLM access request was denied.'
+        }
+        confirmLabel={isApprove ? 'Approve' : 'Reject'}
+        pendingLabel={isApprove ? 'Provisioning…' : 'Rejecting…'}
+        confirmVariant={isApprove ? 'primary' : 'destructive'}
+        pending={dialogPending}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 }

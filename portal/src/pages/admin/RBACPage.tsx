@@ -1,13 +1,39 @@
 import { useMemo, useState } from 'react';
+
 import { usePortal } from '@/store/AppStore';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
 import { useNotify } from '@/hooks/useNotify';
+import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { FilterSelect } from '@/components/ui/filter-select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { PortalRole, User } from '@/types';
 
 const roleLabels: Record<PortalRole, string> = {
   developer: 'Developer',
   llm_admin: 'LLM & AI Admin',
   portal_admin: 'Portal Admin',
+};
+
+const roleBadgeVariant = (role: PortalRole) => {
+  if (role === 'portal_admin') return 'brand' as const;
+  if (role === 'llm_admin') return 'info' as const;
+  return 'neutral' as const;
 };
 
 export function RBACPage() {
@@ -54,7 +80,6 @@ export function RBACPage() {
 
   const save = () => {
     if (!editing || !state.currentUser) return;
-    // Only developers can hold publisher domains.
     const provider_domains = draftRole === 'developer' ? draftDomains : [];
     dispatch({
       type: 'UPDATE_USER',
@@ -77,12 +102,54 @@ export function RBACPage() {
     setEditing(null);
   };
 
+  const columns = useMemo<DataTableColumn<User>[]>(
+    () => [
+      {
+        id: 'user',
+        header: 'User',
+        cell: (u) => <span className="font-medium">{u.display_name}</span>,
+      },
+      { id: 'email', header: 'Email', cell: (u) => u.email },
+      {
+        id: 'role',
+        header: 'Role',
+        cell: (u) => (
+          <Badge variant={roleBadgeVariant(u.portal_roles[0])}>
+            {roleLabels[u.portal_roles[0]]}
+          </Badge>
+        ),
+      },
+      {
+        id: 'domains',
+        header: 'Publisher Domains',
+        cell: (u) =>
+          u.provider_domains.length ? u.provider_domains.map(domainName).join(', ') : '—',
+      },
+      {
+        id: 'actions',
+        header: '',
+        headerClassName: 'w-16',
+        cellClassName: 'text-right',
+        cell: (u) => (
+          <Button type="button" variant="link" size="sm" onClick={() => startEdit(u)}>
+            Edit
+          </Button>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.domains],
+  );
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">RBAC Management</h1>
-      <p className="text-sm text-slate-500">
-        Assign portal roles and publisher domains. Changes are saved and audited.
-      </p>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">RBAC Management</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Assign portal roles and publisher domains. Changes are saved and audited.
+        </p>
+      </div>
+
       <ListFilterBar
         query={query}
         onQueryChange={setQuery}
@@ -94,96 +161,86 @@ export function RBACPage() {
         }}
         resultLabel={`${filtered.length} of ${state.users.length} users`}
       >
-        <select
+        <FilterSelect
           value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="">All roles</option>
-          {(Object.keys(roleLabels) as PortalRole[]).map((role) => (
-            <option key={role} value={role}>
-              {roleLabels[role]}
-            </option>
-          ))}
-        </select>
+          onChange={setRoleFilter}
+          placeholder="All roles"
+          options={(Object.keys(roleLabels) as PortalRole[]).map((role) => ({
+            value: role,
+            label: roleLabels[role],
+          }))}
+          className="w-44"
+        />
       </ListFilterBar>
-      <div className="overflow-x-auto rounded-xl border bg-brand-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-4 py-3 text-left">User</th>
-              <th className="px-4 py-3 text-left">Email</th>
-              <th className="px-4 py-3 text-left">Role</th>
-              <th className="px-4 py-3 text-left">Publisher Domains</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((u) => (
-              <tr key={u.user_id} className="border-t">
-                <td className="px-4 py-3 font-medium">{u.display_name}</td>
-                <td className="px-4 py-3">{u.email}</td>
-                <td className="px-4 py-3">{roleLabels[u.portal_roles[0]]}</td>
-                <td className="px-4 py-3">
-                  {u.provider_domains.length ? u.provider_domains.map(domainName).join(', ') : '—'}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(u)}
-                    className="text-brand-blue hover:text-brand-blue-dark hover:underline"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  {state.users.length === 0 ? 'No users yet.' : 'No users match your filters.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
 
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-md rounded-xl bg-brand-white p-6 space-y-4"
-          >
-            <h2 className="font-bold">Edit {editing.display_name}</h2>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        keyExtractor={(u) => u.user_id}
+        emptyTitle={state.users.length === 0 ? 'No users yet' : 'No users match your filters'}
+        emptyDescription={
+          state.users.length === 0
+            ? 'Users appear here once they sign in to the portal.'
+            : 'Try adjusting your search or filter criteria.'
+        }
+        emptyAction={
+          hasActiveFilters ? (
+            <button
+              type="button"
+              className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+              onClick={() => {
+                setQuery('');
+                setRoleFilter('');
+              }}
+            >
+              Clear filters
+            </button>
+          ) : undefined
+        }
+      />
+
+      <Dialog
+        open={editing !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit {editing?.display_name}</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="space-y-4">
             <div>
-              <label htmlFor="rbac-role" className="block text-sm font-medium mb-1">
+              <label htmlFor="rbac-role" className="mb-1 block text-sm font-medium text-foreground">
                 Portal role
               </label>
-              <select
-                id="rbac-role"
+              <Select
                 value={draftRole}
-                onChange={(e) => setDraftRole(e.target.value as PortalRole)}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
+                onValueChange={(v) => v && setDraftRole(v as PortalRole)}
               >
-                {(Object.keys(roleLabels) as PortalRole[]).map((role) => (
-                  <option key={role} value={role}>
-                    {roleLabels[role]}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="rbac-role" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(roleLabels) as PortalRole[]).map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {roleLabels[role]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {draftRole === 'developer' && (
               <div>
-                <p className="text-sm font-medium mb-1">Publisher domains</p>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
+                <p className="mb-2 text-sm font-medium text-foreground">Publisher domains</p>
+                <div className="max-h-48 space-y-2 overflow-y-auto">
                   {state.domains.map((d) => (
-                    <label key={d.domain_id} className="flex items-center gap-2 text-sm">
+                    <label key={d.domain_id} className="flex items-center gap-2 text-sm text-foreground">
                       <input
                         type="checkbox"
                         checked={draftDomains.includes(d.domain_id)}
                         onChange={() => toggleDomain(d.domain_id)}
+                        className="rounded border-input"
                       />
                       {d.name}
                     </label>
@@ -191,21 +248,15 @@ export function RBACPage() {
                 </div>
               </div>
             )}
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setEditing(null)} className="px-4 py-2 text-sm">
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={save}
-                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+            <Button onClick={save}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,11 +1,19 @@
 import { useMemo, useState } from 'react';
+
 import { usePortal } from '@/store/AppStore';
-import { ClassificationBadge } from '@/components/shared/ClassificationBadge';
-import { LifecycleBadge } from '@/components/shared/LifecycleBadge';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
 import { Pagination } from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 import { useNotify } from '@/hooks/useNotify';
+import {
+  classificationBadgeVariant,
+  lifecycleBadgeVariant,
+} from '@/lib/catalog-badges';
+import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
+import { FilterSelect } from '@/components/ui/filter-select';
 import { domains } from '@/data/domains';
 import { CLASSIFICATIONS } from '@/config/classification';
 import { LIFECYCLE_LABELS } from '@/config/lifecycle';
@@ -18,6 +26,7 @@ export function AllApisPage() {
   const [domainFilter, setDomainFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
+  const [retireTarget, setRetireTarget] = useState<API | null>(null);
 
   const filtered = useMemo(() => {
     return state.apis.filter((api) => {
@@ -38,14 +47,9 @@ export function AllApisPage() {
     12,
   );
 
-  const emergencyRetire = (api: API) => {
-    if (!state.currentUser) return;
-    if (
-      !window.confirm(
-        `Emergency-retire "${api.name}"? This immediately blocks all access and cannot be undone.`,
-      )
-    )
-      return;
+  const confirmEmergencyRetire = () => {
+    if (!retireTarget || !state.currentUser) return;
+    const api = retireTarget;
     dispatch({
       type: 'UPDATE_API',
       payload: { api_id: api.api_id, patch: { lifecycle_status: 'emergency_retired' } },
@@ -64,11 +68,64 @@ export function AllApisPage() {
       },
     });
     notify('API emergency-retired', `${api.name} has been retired and access blocked.`, 'warning');
+    setRetireTarget(null);
   };
+
+  const columns = useMemo<DataTableColumn<API>[]>(
+    () => [
+      {
+        id: 'name',
+        header: 'Name',
+        cell: (api) => <span className="font-medium">{api.name}</span>,
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        cell: (api) => (
+          <Badge variant={lifecycleBadgeVariant(api.lifecycle_status)} withDot>
+            {LIFECYCLE_LABELS[api.lifecycle_status]}
+          </Badge>
+        ),
+      },
+      {
+        id: 'class',
+        header: 'Class',
+        cell: (api) => (
+          <Badge variant={classificationBadgeVariant(api.classification)}>
+            {CLASSIFICATIONS[api.classification].label}
+          </Badge>
+        ),
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        headerClassName: 'w-36',
+        cell: (api) =>
+          api.lifecycle_status !== 'emergency_retired' ? (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setRetireTarget(api)}
+            >
+              Emergency retire
+            </Button>
+          ) : null,
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">All APIs</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">All APIs</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Portal-wide catalog view with emergency lifecycle controls
+        </p>
+      </div>
+
       <ListFilterBar
         query={query}
         onQueryChange={setQuery}
@@ -82,96 +139,87 @@ export function AllApisPage() {
         }}
         resultLabel={`${filtered.length} of ${state.apis.length} APIs`}
       >
-        <select
+        <FilterSelect
           value={domainFilter}
-          onChange={(e) => setDomainFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="">All domains</option>
-          {domains.map((d) => (
-            <option key={d.domain_id} value={d.domain_id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={setDomainFilter}
+          placeholder="All domains"
+          options={domains.map((d) => ({ value: d.domain_id, label: d.name }))}
+          className="w-44"
+        />
+        <FilterSelect
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="">All statuses</option>
-          {(Object.keys(LIFECYCLE_LABELS) as LifecycleStatus[]).map((s) => (
-            <option key={s} value={s}>
-              {LIFECYCLE_LABELS[s]}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={setStatusFilter}
+          placeholder="All statuses"
+          options={(Object.keys(LIFECYCLE_LABELS) as LifecycleStatus[]).map((s) => ({
+            value: s,
+            label: LIFECYCLE_LABELS[s],
+          }))}
+          className="w-44"
+        />
+        <FilterSelect
           value={classFilter}
-          onChange={(e) => setClassFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="">All classifications</option>
-          {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
-            <option key={c} value={c}>
-              {CLASSIFICATIONS[c].label}
-            </option>
-          ))}
-        </select>
+          onChange={setClassFilter}
+          placeholder="All classifications"
+          options={(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => ({
+            value: c,
+            label: CLASSIFICATIONS[c].label,
+          }))}
+          className="w-48"
+        />
       </ListFilterBar>
-      <div className="overflow-x-auto rounded-xl border bg-brand-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-4 py-3 text-left">Name</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Class</th>
-              <th className="px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pageItems.map((api) => (
-              <tr key={api.api_id} className="border-t">
-                <td className="px-4 py-3 font-medium">{api.name}</td>
-                <td className="px-4 py-3">
-                  <LifecycleBadge status={api.lifecycle_status} />
-                </td>
-                <td className="px-4 py-3">
-                  <ClassificationBadge classification={api.classification} />
-                </td>
-                <td className="px-4 py-3">
-                  {api.lifecycle_status !== 'emergency_retired' && (
-                    <button
-                      type="button"
-                      onClick={() => emergencyRetire(api)}
-                      className="text-xs text-red-600 hover:underline"
-                    >
-                      Emergency retire
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                  {state.apis.length === 0
-                    ? 'No APIs in the catalog yet.'
-                    : 'No APIs match your filters.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        total={total}
-        pageStart={pageStart}
-        pageEnd={pageEnd}
-        onPageChange={setPage}
-        unit="APIs"
+
+      <DataTable
+        columns={columns}
+        data={pageItems}
+        keyExtractor={(api) => api.api_id}
+        emptyTitle={
+          state.apis.length === 0 ? 'No APIs in the catalog yet' : 'No APIs match your filters'
+        }
+        emptyDescription={
+          state.apis.length === 0
+            ? 'APIs appear here once providers register and publish them.'
+            : 'Try adjusting your search or filter criteria.'
+        }
+        emptyAction={
+          hasActiveFilters ? (
+            <button
+              type="button"
+              className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+              onClick={() => {
+                setQuery('');
+                setDomainFilter('');
+                setStatusFilter('');
+                setClassFilter('');
+              }}
+            >
+              Clear filters
+            </button>
+          ) : undefined
+        }
+      />
+
+      {filtered.length > 0 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageStart={pageStart}
+          pageEnd={pageEnd}
+          onPageChange={setPage}
+          unit="APIs"
+        />
+      )}
+
+      <ConfirmDialog
+        open={retireTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRetireTarget(null);
+        }}
+        title={`Emergency-retire "${retireTarget?.name ?? ''}"?`}
+        description="This immediately blocks all access and cannot be undone."
+        confirmLabel="Emergency retire"
+        confirmVariant="destructive"
+        onConfirm={confirmEmergencyRetire}
       />
     </div>
   );

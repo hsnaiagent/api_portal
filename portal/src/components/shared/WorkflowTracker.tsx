@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle, Loader2, XCircle } from 'lucide-react';
+
 import type { SubscriptionStatus } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -43,45 +44,47 @@ export function WorkflowTracker({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-0 sm:items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-0">
         {steps.map((step, i) => {
           const done = i + 1 < current;
           const active = i + 1 === current;
           return (
-            <div key={step.key} className="flex items-center flex-1">
+            <div key={step.key} className="flex flex-1 items-center">
               <div className="flex items-center gap-2">
                 {done ? (
-                  <CheckCircle2 className="h-5 w-5 text-brand-green" />
+                  <CheckCircle2 className="size-5 text-status-active" />
                 ) : active ? (
                   terminalBad ? (
-                    <XCircle className="h-5 w-5 text-red-500" />
+                    <XCircle className="size-5 text-destructive" />
                   ) : (
-                    <Loader2 className="h-5 w-5 text-brand-green animate-spin" />
+                    <Loader2 className="size-5 animate-spin text-status-active" />
                   )
                 ) : (
-                  <Circle className="h-5 w-5 text-slate-300" />
+                  <Circle className="size-5 text-muted-foreground/40" />
                 )}
                 <span
                   className={cn(
                     'text-sm',
-                    active ? 'font-medium text-slate-800' : 'text-slate-500',
+                    active ? 'font-medium text-foreground' : 'text-muted-foreground',
                   )}
                 >
                   {step.label}
                 </span>
               </div>
               {i < steps.length - 1 && (
-                <div className="hidden sm:block flex-1 h-px bg-slate-200 mx-3" />
+                <div className="mx-3 hidden h-px flex-1 bg-border sm:block" />
               )}
             </div>
           );
         })}
       </div>
       {outcome === 'rejected' && (
-        <p className="text-xs font-medium text-red-600">This request was rejected.</p>
+        <p className="text-xs font-medium text-destructive">This request was rejected.</p>
       )}
       {outcome === 'expired' && (
-        <p className="text-xs font-medium text-slate-500">This subscription has expired.</p>
+        <p className="text-xs font-medium text-muted-foreground">
+          This subscription has expired.
+        </p>
       )}
     </div>
   );

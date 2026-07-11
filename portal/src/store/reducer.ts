@@ -35,7 +35,13 @@ export const initialState: PortalState = {
 
   plannerSelectedApiIds: [],
 
-  catalogFilters: { query: '', domainFilter: '', classFilter: '' },
+  catalogFilters: {
+    query: '',
+    domains: [],
+    classifications: [],
+    sort: 'relevance',
+    aiEnabled: true,
+  },
 };
 
 function preserveData(state: PortalState): Partial<PortalState> {

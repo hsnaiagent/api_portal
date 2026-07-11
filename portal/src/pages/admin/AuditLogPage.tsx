@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+
 import { usePortal } from '@/store/AppStore';
 import { getAIResponse } from '@/mocks/AIAdapter';
 import { AuditLogTable } from '@/components/shared/AuditLogTable';
@@ -7,6 +8,9 @@ import { Pagination } from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 import { AIBadge } from '@/components/ai/AIBadge';
 import { getUserById } from '@/data/users';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FilterSelect } from '@/components/ui/filter-select';
 
 export function AuditLogPage() {
   const { state } = usePortal();
@@ -80,15 +84,26 @@ export function AuditLogPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Audit Log</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Audit Log</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Immutable record of portal actions for compliance and investigation
+        </p>
+      </div>
+
       {anomalyAlert && (
-        <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
-          <p className="text-sm font-medium flex items-center gap-2">
-            <AIBadge label="AI-12" /> Anomaly Alert
-          </p>
-          <p className="text-sm text-orange-800 mt-1">{anomalyAlert}</p>
-        </div>
+        <Card className="border-status-warning/30 bg-status-warning/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AIBadge label="AI-12" /> Anomaly Alert
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-foreground">{anomalyAlert}</p>
+          </CardContent>
+        </Card>
       )}
+
       <ListFilterBar
         query={query}
         onQueryChange={setQuery}
@@ -101,47 +116,49 @@ export function AuditLogPage() {
         }}
         resultLabel={`${filtered.length} of ${state.auditLogs.length} entries`}
       >
-        <select
+        <FilterSelect
           value={actionFilter}
-          onChange={(e) => setActionFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="">All actions</option>
-          {actionOptions.map((action) => (
-            <option key={action} value={action}>
-              {action}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={setActionFilter}
+          placeholder="All actions"
+          options={actionOptions.map((action) => ({ value: action, label: action }))}
+          className="w-52"
+        />
+        <FilterSelect
           value={actorFilter}
-          onChange={(e) => setActorFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="">All actor types</option>
-          <option value="user">User</option>
-          <option value="system">System</option>
-          <option value="webhook">Webhook</option>
-        </select>
+          onChange={setActorFilter}
+          placeholder="All actor types"
+          options={[
+            { value: 'user', label: 'User' },
+            { value: 'system', label: 'System' },
+            { value: 'webhook', label: 'Webhook' },
+          ]}
+          className="w-40"
+        />
       </ListFilterBar>
+
       <AuditLogTable logs={pageItems} />
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        total={total}
-        pageStart={pageStart}
-        pageEnd={pageEnd}
-        onPageChange={setPage}
-        unit="entries"
-      />
-      <button
+
+      {filtered.length > 0 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageStart={pageStart}
+          pageEnd={pageEnd}
+          onPageChange={setPage}
+          unit="entries"
+        />
+      )}
+
+      <Button
         type="button"
+        variant="link"
+        size="sm"
         onClick={exportCsv}
         disabled={filtered.length === 0}
-        className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline disabled:opacity-50"
       >
         Export {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'} as CSV
-      </button>
+      </Button>
     </div>
   );
 }

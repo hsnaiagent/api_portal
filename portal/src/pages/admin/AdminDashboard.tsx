@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+
 import { usePortal } from '@/store/AppStore';
 import { getAIResponse } from '@/mocks/AIAdapter';
 import { AIThinkingOverlay } from '@/components/ai/AIThinkingOverlay';
 import { ROUTES } from '@/config/routes';
+import { buttonVariants } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 
 export function AdminDashboard() {
   const { state } = usePortal();
@@ -25,60 +29,60 @@ export function AdminDashboard() {
     });
   }, [state.apis, state.subscriptions, state.providerAccessRequests]);
 
+  const proposedCount = state.apis.filter((a) => a.lifecycle_status === 'proposed').length;
+  const pendingProviderCount = state.providerAccessRequests.filter(
+    (r) => r.status === 'pending',
+  ).length;
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      <div className="grid sm:grid-cols-4 gap-4">
-        <div className="rounded-xl border bg-brand-white p-4">
-          <p className="text-sm text-slate-500">Total APIs</p>
-          <p className="text-3xl font-bold">{state.apis.length}</p>
-        </div>
-        <div className="rounded-xl border bg-brand-white p-4">
-          <p className="text-sm text-slate-500">Subscriptions</p>
-          <p className="text-3xl font-bold">{state.subscriptions.length}</p>
-        </div>
-        <div className="rounded-xl border bg-brand-white p-4">
-          <p className="text-sm text-slate-500">Proposed</p>
-          <p className="text-3xl font-bold text-brand-blue">
-            {state.apis.filter((a) => a.lifecycle_status === 'proposed').length}
-          </p>
-        </div>
-        <div className="rounded-xl border bg-brand-white p-4">
-          <p className="text-sm text-slate-500">Pending provider requests</p>
-          <p className="text-3xl font-bold text-brand-blue">
-            {state.providerAccessRequests.filter((r) => r.status === 'pending').length}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Portal-wide catalog health, queues, and governance
+        </p>
       </div>
-      <div className="rounded-xl border border-brand-blue/30 bg-brand-blue-light p-6">
-        <h2 className="font-semibold text-brand-dark-gray mb-2">
-          AI Catalog Health Summary (AI-13)
-        </h2>
-        <AIThinkingOverlay loading={loading} text={!loading ? health : undefined} />
+
+      <div className="grid gap-4 sm:grid-cols-4">
+        <StatCard label="Total APIs" value={state.apis.length} />
+        <StatCard label="Subscriptions" value={state.subscriptions.length} />
+        <StatCard label="Proposed" value={proposedCount} valueClassName="text-link" />
+        <StatCard
+          label="Pending provider requests"
+          value={pendingProviderCount}
+          valueClassName="text-link"
+        />
       </div>
+
+      <Card className="border-link/30 bg-link-subtle/30">
+        <CardHeader>
+          <CardTitle className="text-base">AI Catalog Health Summary (AI-13)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AIThinkingOverlay loading={loading} text={!loading ? health : undefined} />
+        </CardContent>
+      </Card>
+
       <div className="flex flex-wrap gap-3">
-        <Link
-          to={ROUTES.admin.proposals}
-          className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm"
-        >
+        <Link to={ROUTES.admin.proposals} className={buttonVariants({ variant: 'primary' })}>
           Proposals Queue
         </Link>
-        <Link to={ROUTES.admin.publishing} className="rounded-lg border px-4 py-2 text-sm">
+        <Link to={ROUTES.admin.publishing} className={buttonVariants({ variant: 'secondary' })}>
           Publishing Queue
         </Link>
-        <Link to={ROUTES.admin.allApis} className="rounded-lg border px-4 py-2 text-sm">
+        <Link to={ROUTES.admin.allApis} className={buttonVariants({ variant: 'secondary' })}>
           All APIs
         </Link>
-        <Link to={ROUTES.admin.providerRequests} className="rounded-lg border px-4 py-2 text-sm">
+        <Link to={ROUTES.admin.providerRequests} className={buttonVariants({ variant: 'secondary' })}>
           Provider Access Requests
         </Link>
-        <Link to={ROUTES.admin.rbac} className="rounded-lg border px-4 py-2 text-sm">
+        <Link to={ROUTES.admin.rbac} className={buttonVariants({ variant: 'secondary' })}>
           RBAC
         </Link>
-        <Link to={ROUTES.admin.domains} className="rounded-lg border px-4 py-2 text-sm">
+        <Link to={ROUTES.admin.domains} className={buttonVariants({ variant: 'secondary' })}>
           Domain Registry
         </Link>
-        <Link to={ROUTES.admin.audit} className="rounded-lg border px-4 py-2 text-sm">
+        <Link to={ROUTES.admin.audit} className={buttonVariants({ variant: 'secondary' })}>
           Audit Log
         </Link>
       </div>

@@ -1,6 +1,7 @@
 import { CLASSIFICATIONS } from '@/config/classification';
+import { Badge } from '@/components/ui/badge';
+import { classificationBadgeVariant } from '@/lib/catalog-badges';
 import type { Classification } from '@/types';
-import { cn } from '@/lib/utils';
 
 export function ClassificationBadge({
   classification,
@@ -11,15 +12,11 @@ export function ClassificationBadge({
 }) {
   const c = CLASSIFICATIONS[classification];
   return (
-    <span
+    <Badge
+      variant={classificationBadgeVariant(classification)}
       title={showHandling ? c.handling : undefined}
-      className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-        c.bg,
-        c.color,
-      )}
     >
       {c.label}
-    </span>
+    </Badge>
   );
 }

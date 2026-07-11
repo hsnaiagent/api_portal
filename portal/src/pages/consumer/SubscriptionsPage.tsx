@@ -1,11 +1,23 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileKey, Search } from 'lucide-react';
+import { FileKey } from 'lucide-react';
+
 import { usePortal } from '@/store/AppStore';
 import { SubscriptionCard } from '@/components/shared/SubscriptionCard';
 import { domains, getDomainName } from '@/data/domains';
 import { ROUTES } from '@/config/routes';
 import { isPendingSubscription, isRejectedSubscription } from '@/lib/subscriptions';
+import { FilterChip } from '@/components/ui/filter-chip';
+import { Input } from '@/components/ui/input';
+import { buttonVariants, Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { SubscriptionStatus } from '@/types';
 
 type StatusFilter = 'all' | 'active' | 'pending' | 'rejected';
@@ -30,7 +42,6 @@ export function SubscriptionsPage() {
   );
   const myApps = state.applications.filter((a) => a.owner_user_id === state.currentUser?.user_id);
 
-  // Pre-index reference collections so filtering/rendering is O(1) per row.
   const apiById = useMemo(() => new Map(state.apis.map((a) => [a.api_id, a])), [state.apis]);
   const appById = useMemo(
     () => new Map(state.applications.map((a) => [a.application_id, a])),
@@ -82,130 +93,121 @@ export function SubscriptionsPage() {
     { value: 'rejected', label: 'Rejected', count: stats.rejected },
   ];
 
+  const clearFilters = () => {
+    setQuery('');
+    setDomainFilter('');
+    setAppFilter('');
+    setStatusFilter('all');
+  };
+
+  const hasActiveFilters = Boolean(
+    query || domainFilter || appFilter || statusFilter !== 'all',
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Subscriptions</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">My Subscriptions</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Track API access, approval status, and credentials
           </p>
         </div>
         <Link
           to={ROUTES.consumer.catalog}
-          className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline"
+          className={buttonVariants({ variant: 'link', size: 'sm' })}
         >
           Browse catalog for more APIs
         </Link>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by status">
         {statusChips.map((chip) => (
-          <button
+          <FilterChip
             key={chip.value}
-            type="button"
-            onClick={() => setStatusFilter(chip.value)}
-            className={`rounded-xl border p-4 text-left transition-colors ${
-              statusFilter === chip.value
-                ? 'border-brand-blue bg-brand-blue-light/50 ring-1 ring-brand-blue/30'
-                : 'border-slate-200 bg-brand-white hover:border-slate-300'
-            }`}
-          >
-            <p className="text-sm text-slate-500">{chip.label}</p>
-            <p className="text-2xl font-bold text-slate-900 mt-0.5">{chip.count}</p>
-          </button>
+            label={chip.label}
+            count={chip.count}
+            active={statusFilter === chip.value}
+            onToggle={() => setStatusFilter(chip.value)}
+          />
         ))}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-brand-white p-4 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by API name, purpose, application, or domain…"
-            className="w-full rounded-lg border border-slate-200 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-brand-blue"
-          />
-        </div>
+      <div className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by API name, purpose, application, or domain…"
+        />
 
         <div className="flex flex-wrap gap-3">
-          <select
-            value={domainFilter}
-            onChange={(e) => setDomainFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm bg-brand-white"
+          <Select
+            value={domainFilter || 'all'}
+            onValueChange={(v) => setDomainFilter(!v || v === 'all' ? '' : v)}
           >
-            <option value="">All domains</option>
-            {domains.map((d) => (
-              <option key={d.domain_id} value={d.domain_id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All domains" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All domains</SelectItem>
+              {domains.map((d) => (
+                <SelectItem key={d.domain_id} value={d.domain_id}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select
-            value={appFilter}
-            onChange={(e) => setAppFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm bg-brand-white"
+          <Select
+            value={appFilter || 'all'}
+            onValueChange={(v) => setAppFilter(!v || v === 'all' ? '' : v)}
           >
-            <option value="">All applications</option>
-            {myApps.map((a) => (
-              <option key={a.application_id} value={a.application_id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All applications" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All applications</SelectItem>
+              {myApps.map((a) => (
+                <SelectItem key={a.application_id} value={a.application_id}>
+                  {a.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          {(query || domainFilter || appFilter || statusFilter !== 'all') && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery('');
-                setDomainFilter('');
-                setAppFilter('');
-                setStatusFilter('all');
-              }}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
-            >
+          {hasActiveFilters && (
+            <Button variant="secondary" size="sm" onClick={clearFilters}>
               Clear filters
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-muted-foreground">
         {filtered.length} of {mySubs.length} subscription{mySubs.length === 1 ? '' : 's'}
       </p>
 
       {mySubs.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center space-y-3">
-          <FileKey className="h-10 w-10 text-slate-300 mx-auto" />
-          <p className="font-medium text-slate-700">No subscriptions yet</p>
-          <p className="text-sm text-slate-500 max-w-sm mx-auto">
-            Browse the API catalog to request access to enterprise APIs for your applications.
-          </p>
-          <Link
-            to={ROUTES.consumer.catalog}
-            className="inline-block rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm font-medium hover:bg-brand-green-dark"
-          >
-            Browse API catalog
-          </Link>
-        </div>
+        <EmptyState
+          icon={<FileKey />}
+          title="No subscriptions yet"
+          description="Browse the API catalog to request access to enterprise APIs for your applications."
+          action={
+            <Link to={ROUTES.consumer.catalog} className={buttonVariants({ variant: 'primary' })}>
+              Browse API catalog
+            </Link>
+          }
+        />
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-brand-white p-10 text-center">
-          <p className="text-slate-600">No subscriptions match your filters.</p>
-          <button
-            type="button"
-            onClick={() => {
-              setQuery('');
-              setDomainFilter('');
-              setAppFilter('');
-              setStatusFilter('all');
-            }}
-            className="mt-3 text-sm text-brand-blue hover:underline"
-          >
-            Clear all filters
-          </button>
-        </div>
+        <EmptyState
+          title="No subscriptions match your filters"
+          description="Try adjusting your search or filter criteria."
+          action={
+            <Button variant="secondary" onClick={clearFilters}>
+              Clear all filters
+            </Button>
+          }
+        />
       ) : (
         <div className="grid gap-4">
           {filtered.map((sub) => {

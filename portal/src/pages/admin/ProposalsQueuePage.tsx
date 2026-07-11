@@ -1,10 +1,18 @@
 import { useMemo, useState } from 'react';
+import { Inbox } from 'lucide-react';
+
 import { usePortal } from '@/store/AppStore';
 import { getAIResponse } from '@/mocks/AIAdapter';
-import { ClassificationBadge } from '@/components/shared/ClassificationBadge';
 import { ListFilterBar } from '@/components/shared/ListFilterBar';
 import { AIBadge } from '@/components/ai/AIBadge';
 import { useNotify } from '@/hooks/useNotify';
+import { classificationBadgeVariant } from '@/lib/catalog-badges';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FilterSelect } from '@/components/ui/filter-select';
 import { CLASSIFICATIONS } from '@/config/classification';
 import type { Classification } from '@/types';
 
@@ -16,6 +24,7 @@ export function ProposalsQueuePage() {
   const [workflowTip, setWorkflowTip] = useState<string>();
   const [query, setQuery] = useState('');
   const [classFilter, setClassFilter] = useState('');
+  const [rejectTarget, setRejectTarget] = useState<{ apiId: string; name: string } | null>(null);
 
   const filtered = useMemo(() => {
     return proposed.filter((api) => {
@@ -55,14 +64,16 @@ export function ProposalsQueuePage() {
     notify('Proposal accepted', `${name} moved to Under Review.`, 'success');
   };
 
-  const reject = (apiId: string, name: string) => {
-    if (!window.confirm(`Reject the proposal for "${name}"?`)) return;
+  const reject = () => {
+    if (!rejectTarget) return;
+    const { apiId, name } = rejectTarget;
     dispatch({
       type: 'UPDATE_API',
       payload: { api_id: apiId, patch: { lifecycle_status: 'rejected' } },
     });
     audit('api.proposal.rejected', apiId);
     notify('Proposal rejected', `${name} was rejected.`, 'warning');
+    setRejectTarget(null);
   };
 
   const showWorkflow = async (apiId: string) => {
@@ -76,7 +87,13 @@ export function ProposalsQueuePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Proposals Queue</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Proposals Queue</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review newly submitted API proposals before they enter the review workflow
+        </p>
+      </div>
+
       <ListFilterBar
         query={query}
         onQueryChange={setQuery}
@@ -88,63 +105,100 @@ export function ProposalsQueuePage() {
         }}
         resultLabel={`${filtered.length} of ${proposed.length} proposals`}
       >
-        <select
+        <FilterSelect
           value={classFilter}
-          onChange={(e) => setClassFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="">All classifications</option>
-          {(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => (
-            <option key={c} value={c}>
-              {CLASSIFICATIONS[c].label}
-            </option>
-          ))}
-        </select>
+          onChange={setClassFilter}
+          placeholder="All classifications"
+          options={(Object.keys(CLASSIFICATIONS) as Classification[]).map((c) => ({
+            value: c,
+            label: CLASSIFICATIONS[c].label,
+          }))}
+          className="w-48"
+        />
       </ListFilterBar>
-      {filtered.map((api) => (
-        <div key={api.api_id} className="rounded-xl border bg-brand-white p-6 space-y-3">
-          <div className="flex justify-between flex-wrap gap-2">
-            <div>
-              <p className="font-semibold">{api.name}</p>
-              <p className="text-sm text-slate-600">{api.description}</p>
-            </div>
-            <ClassificationBadge classification={api.classification} />
-          </div>
-          <button
-            type="button"
-            onClick={() => showWorkflow(api.api_id)}
-            className="text-xs text-brand-blue"
-          >
-            <AIBadge label="AI-11" /> Workflow suggestion
-          </button>
-          {expanded === api.api_id && workflowTip && (
-            <p className="text-sm bg-brand-blue-light p-3 rounded-lg">{workflowTip}</p>
-          )}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => accept(api.api_id, api.name)}
-              className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm"
-            >
-              Accept for review
-            </button>
-            <button
-              type="button"
-              onClick={() => reject(api.api_id, api.name)}
-              className="rounded-lg border text-red-600 px-4 py-2 text-sm"
-            >
-              Reject
-            </button>
-          </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<Inbox />}
+          title={proposed.length === 0 ? 'No proposals awaiting review' : 'No proposals match your filters'}
+          description={
+            proposed.length === 0
+              ? 'When providers submit new APIs, they will appear here for triage.'
+              : 'Try adjusting your search or filter criteria.'
+          }
+          action={
+            hasActiveFilters ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setQuery('');
+                  setClassFilter('');
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <div className="grid gap-4">
+          {filtered.map((api) => (
+            <Card key={api.api_id}>
+              <CardContent className="space-y-3 p-6">
+                <div className="flex flex-wrap justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-foreground">{api.name}</p>
+                    <p className="text-sm text-muted-foreground">{api.description}</p>
+                  </div>
+                  <Badge variant={classificationBadgeVariant(api.classification)}>
+                    {CLASSIFICATIONS[api.classification].label}
+                  </Badge>
+                </div>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0"
+                  onClick={() => void showWorkflow(api.api_id)}
+                >
+                  <AIBadge label="AI-11" /> Workflow suggestion
+                </Button>
+                {expanded === api.api_id && workflowTip && (
+                  <p className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-foreground">
+                    {workflowTip}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <Button type="button" onClick={() => accept(api.api_id, api.name)}>
+                    Accept for review
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => setRejectTarget({ apiId: api.api_id, name: api.name })}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      ))}
-      {filtered.length === 0 && (
-        <p className="text-slate-500">
-          {proposed.length === 0
-            ? 'No proposals are awaiting review.'
-            : 'No proposals match your filters.'}
-        </p>
       )}
+
+      <ConfirmDialog
+        open={rejectTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRejectTarget(null);
+        }}
+        title={`Reject proposal for "${rejectTarget?.name ?? ''}"?`}
+        description="The API will be marked as rejected and removed from the proposals queue."
+        confirmLabel="Reject proposal"
+        confirmVariant="destructive"
+        onConfirm={reject}
+      />
     </div>
   );
 }

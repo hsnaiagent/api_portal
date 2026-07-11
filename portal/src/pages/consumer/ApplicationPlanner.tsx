@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
+
 import { usePortal } from '@/store/AppStore';
 import { getAIResponse } from '@/mocks/AIAdapter';
 import { AIThinkingOverlay } from '@/components/ai/AIThinkingOverlay';
-import { ApiCard } from '@/components/shared/ApiCard';
+import { CatalogApiCard } from '@/components/catalog/api-card';
 import { SDKPanel } from '@/components/sdk/SDKPanel';
 import { useNotify } from '@/hooks/useNotify';
 import { ROUTES } from '@/config/routes';
@@ -15,6 +16,9 @@ import {
 } from '@/lib/planner';
 import { buildUserSubscriptionMap } from '@/lib/subscriptions';
 import { getDomainName } from '@/data/domains';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Subscription } from '@/types';
 
 export function ApplicationPlanner() {
@@ -50,7 +54,9 @@ export function ApplicationPlanner() {
       if (!items.length && description.trim()) {
         items = suggestPlannerBundleFromDescription(description, state.apis);
         if (items.length && res?.text) {
-          setAiText(`${res.text} (Bundle filled from catalog search because no valid API IDs were returned.)`);
+          setAiText(
+            `${res.text} (Bundle filled from catalog search because no valid API IDs were returned.)`,
+          );
         }
       }
 
@@ -118,40 +124,39 @@ export function ApplicationPlanner() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Sparkles className="h-6 w-6 text-brand-blue" />
-        <h1 className="text-2xl font-bold">AI Application Planner</h1>
+        <Sparkles className="size-6 text-link" />
+        <h1 className="text-2xl font-bold text-foreground">AI Application Planner</h1>
       </div>
-      <p className="text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Describe what you want to build. AI maps your description to relevant APIs from the catalog.
       </p>
 
-      <textarea
+      <Textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         rows={5}
         placeholder="e.g. An HR leadership dashboard showing monthly salary statistics, headcount trends, and org structure for workforce planning..."
-        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-brand-blue"
       />
-      <button
+      <Button
         type="button"
         onClick={analyze}
         disabled={!description.trim() || loading}
-        className="rounded-lg bg-brand-blue px-6 py-2.5 text-brand-white font-medium hover:bg-brand-blue-dark disabled:opacity-50"
+        loading={loading}
       >
         Find APIs for my application
-      </button>
+      </Button>
 
       <AIThinkingOverlay loading={loading} text={!loading ? aiText : undefined} />
 
       {bundle.length > 0 && (
         <>
-          <h2 className="text-lg font-semibold">Proposed API Bundle</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <h2 className="text-lg font-semibold text-foreground">Proposed API Bundle</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
             {bundle.map((item) => {
               const api = state.apis.find((a) => a.api_id === item.id);
               if (!api) return null;
               return (
-                <ApiCard
+                <CatalogApiCard
                   key={item.id}
                   api={api}
                   subscription={subMap.get(api.api_id) ?? null}
@@ -167,38 +172,38 @@ export function ApplicationPlanner() {
           </div>
           {selected.length > 0 && (
             <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={requestBundle}
-                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white font-medium"
-              >
+              <Button type="button" onClick={requestBundle}>
                 Request access to {selected.length} APIs
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setPreviewApiId(selected[0])}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
               >
                 Preview SDK for first selected
-              </button>
+              </Button>
             </div>
           )}
         </>
       )}
 
       {previewApi && app && (
-        <div className="rounded-xl border border-slate-200 bg-brand-white p-6">
-          <h3 className="font-semibold mb-4">SDK Preview: {previewApi.name}</h3>
-          <SDKPanel
-            api={previewApi}
-            application={{ ...app, application_description: description }}
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>SDK Preview: {previewApi.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SDKPanel
+              api={previewApi}
+              application={{ ...app, application_description: description }}
+            />
+          </CardContent>
+        </Card>
       )}
 
       <Link
         to={ROUTES.consumer.subscriptions}
-        className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline"
+        className={buttonVariants({ variant: 'link', size: 'sm' })}
       >
         View subscription status →
       </Link>

@@ -1,32 +1,30 @@
 import { useMemo } from 'react';
 
 import type { LLMSubscriptionFormData } from '@/types';
-
 import { calculateLlmRoi } from '@/lib/roles';
-
 import { domains } from '@/data/domains';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const emptyForm: LLMSubscriptionFormData = {
   use_case_name: '',
-
   estimated_value: '',
-
   admin_area: '',
-
   deployment_date: '',
-
   task_description: '',
-
   frequency_before: 0,
-
   frequency_after: 0,
-
   time_before_minutes: 0,
-
   time_after_minutes: 0,
-
   expected_users: 0,
-
   contact: '',
 };
 
@@ -45,11 +43,8 @@ const FIELD_LABELS: Partial<Record<keyof LLMSubscriptionFormData, string>> = {
 
 interface LLMSubscriptionFormProps {
   value: LLMSubscriptionFormData;
-
   onChange: (value: LLMSubscriptionFormData) => void;
-
   readOnly?: boolean;
-
   showRoi?: boolean;
 }
 
@@ -60,9 +55,7 @@ export function LLMSubscriptionForm({
   showRoi = true,
 }: LLMSubscriptionFormProps) {
   const roi = useMemo(() => calculateLlmRoi(value), [value]);
-
   const errors = readOnly ? {} : validateLlmForm(value);
-
   const adminAreas = domains.filter((d) => d.domain_id !== 'dom_ai').map((d) => d.name);
 
   const set = <K extends keyof LLMSubscriptionFormData>(
@@ -72,261 +65,197 @@ export function LLMSubscriptionForm({
     onChange({ ...value, [key]: val });
   };
 
-  const inputClass =
-    'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50';
-
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="font-semibold text-slate-800">Section A — Use Case Identity</h3>
-
-        <div className="grid sm:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Section A — Use Case Identity</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium mb-1">Use Case Name</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">Use Case Name</label>
+            <Input
               type="text"
-
               value={value.use_case_name}
-
               onChange={(e) => set('use_case_name', e.target.value)}
-
               disabled={readOnly}
-
-              className={inputClass}
-
               placeholder="e.g. HR Report Narrative Generator"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Admin Area using this use case</label>
-
-            <select
-              value={value.admin_area}
-
-              onChange={(e) => set('admin_area', e.target.value)}
-
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Admin Area using this use case
+            </label>
+            <Select
+              value={value.admin_area || undefined}
+              onValueChange={(v) => v && set('admin_area', v)}
               disabled={readOnly}
-
-              className={inputClass}
             >
-              <option value="">Select area</option>
-
-              {adminAreas.map((area) => (
-                <option key={area} value={area}>
-                  {area}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select area" />
+              </SelectTrigger>
+              <SelectContent>
+                {adminAreas.map((area) => (
+                  <SelectItem key={area} value={area}>
+                    {area}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Contact person</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">Contact person</label>
+            <Input
               type="email"
-
               value={value.contact}
-
               onChange={(e) => set('contact', e.target.value)}
-
               disabled={readOnly}
-
-              className={inputClass}
-
               placeholder="name@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Deployment Date</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">Deployment Date</label>
+            <Input
               type="date"
-
               value={value.deployment_date}
-
               onChange={(e) => set('deployment_date', e.target.value)}
-
               disabled={readOnly}
-
-              className={inputClass}
             />
           </div>
 
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium mb-1">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Task the use case provides productivity for
             </label>
-
-            <textarea
+            <Textarea
               value={value.task_description}
-
               onChange={(e) => set('task_description', e.target.value)}
-
               disabled={readOnly}
-
               rows={3}
-
-              className={inputClass}
-
               placeholder="Describe the business task this LLM use case automates or accelerates"
             />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="space-y-4">
-        <h3 className="font-semibold text-slate-800">Section B — Productivity Impact</h3>
-
-        <div className="grid sm:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Section B — Productivity Impact</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium mb-1">Frequency before (times/week)</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Frequency before (times/week)
+            </label>
+            <Input
               type="number"
-
               min={0}
-
               value={value.frequency_before || ''}
-
               onChange={(e) => set('frequency_before', Number(e.target.value))}
-
               disabled={readOnly}
-
-              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Frequency after (times/week)</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Frequency after (times/week)
+            </label>
+            <Input
               type="number"
-
               min={0}
-
               value={value.frequency_after || ''}
-
               onChange={(e) => set('frequency_after', Number(e.target.value))}
-
               disabled={readOnly}
-
-              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Time spent before (minutes)</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Time spent before (minutes)
+            </label>
+            <Input
               type="number"
-
               min={0}
-
               value={value.time_before_minutes || ''}
-
               onChange={(e) => set('time_before_minutes', Number(e.target.value))}
-
               disabled={readOnly}
-
-              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Time spent after (minutes)</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Time spent after (minutes)
+            </label>
+            <Input
               type="number"
-
               min={0}
-
               value={value.time_after_minutes || ''}
-
               onChange={(e) => set('time_after_minutes', Number(e.target.value))}
-
               disabled={readOnly}
-
-              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Expected number of users</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Expected number of users
+            </label>
+            <Input
               type="number"
-
               min={1}
-
               value={value.expected_users || ''}
-
               onChange={(e) => set('expected_users', Number(e.target.value))}
-
               disabled={readOnly}
-
-              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Estimated Value / Cost Savings</label>
-
-            <input
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Estimated Value / Cost Savings
+            </label>
+            <Input
               type="text"
-
               value={value.estimated_value}
-
               onChange={(e) => set('estimated_value', e.target.value)}
-
               disabled={readOnly}
-
-              className={inputClass}
-
               placeholder="e.g. SAR 120,000/year"
             />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {showRoi && (
-        <div className="rounded-xl border border-brand-green/30 bg-brand-green-light/40 p-4 space-y-2">
-          <h4 className="font-semibold text-brand-green text-sm">Live ROI Preview</h4>
-
-          <div className="grid sm:grid-cols-2 gap-2 text-sm text-slate-700">
+        <div className="rounded-xl border border-brand/30 bg-brand-subtle/40 p-4 space-y-2">
+          <h4 className="text-sm font-semibold text-brand">Live ROI Preview</h4>
+          <div className="grid gap-2 text-sm text-foreground sm:grid-cols-2">
             <p>
               Time saved per use: <strong>{roi.timeSavedPerUse} min</strong>
             </p>
-
             <p>
               Frequency reduction: <strong>{roi.frequencyReduction} times/week</strong>
             </p>
-
             <p>
               Per-user weekly savings: <strong>{roi.perUserWeeklyMinutes} min</strong>
             </p>
-
             <p>
               Total weekly savings ({value.expected_users || 0} users):{' '}
               <strong>{roi.totalWeeklyHours} hours</strong>
             </p>
           </div>
-
           {value.estimated_value && (
-            <p className="text-sm text-slate-600">
-              Estimated value: <strong>{value.estimated_value}</strong>
+            <p className="text-sm text-muted-foreground">
+              Estimated value: <strong className="text-foreground">{value.estimated_value}</strong>
             </p>
           )}
         </div>
       )}
 
       {!readOnly && Object.keys(errors).length > 0 && (
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+        <div className="rounded-lg border border-status-warning/30 bg-status-warning/10 p-3 text-sm text-foreground">
           <p className="font-medium">Please complete the following:</p>
-
-          <ul className="list-disc list-inside mt-1">
+          <ul className="mt-1 list-inside list-disc">
             {(Object.entries(errors) as [keyof LLMSubscriptionFormData, string][]).map(
               ([key, msg]) => (
                 <li key={key}>

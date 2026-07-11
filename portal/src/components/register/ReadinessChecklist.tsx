@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Check, Loader2, X } from 'lucide-react';
+
 import { usePortal } from '@/store/AppStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import {
   buildBasepathCheckItem,
   checkHttpsEnforced,
@@ -21,31 +25,23 @@ interface ReadinessChecklistProps {
 function statusStyles(status: ReadinessCheckItem['status']): string {
   switch (status) {
     case 'pass':
-      return 'text-brand-green';
+      return 'text-status-active-foreground';
     case 'fail':
-      return 'text-red-600';
+      return 'text-destructive';
     case 'warning':
-      return 'text-amber-600';
+      return 'text-status-pending-foreground';
     case 'pending':
-      return 'text-slate-500';
+      return 'text-muted-foreground';
     default:
-      return 'text-slate-600';
+      return 'text-muted-foreground';
   }
 }
 
-function statusIcon(status: ReadinessCheckItem['status']): string {
-  switch (status) {
-    case 'pass':
-      return '✓';
-    case 'fail':
-      return '✗';
-    case 'warning':
-      return '⚠';
-    case 'pending':
-      return '…';
-    default:
-      return '•';
-  }
+function StatusIcon({ status }: { status: ReadinessCheckItem['status'] }) {
+  if (status === 'pass') return <Check className="size-4 shrink-0" />;
+  if (status === 'fail') return <X className="size-4 shrink-0" />;
+  if (status === 'pending') return <Loader2 className="size-4 shrink-0 animate-spin" />;
+  return <span className="size-4 shrink-0 text-center text-xs font-bold">!</span>;
 }
 
 async function fetchBasepathAvailability(
@@ -137,26 +133,37 @@ export function ReadinessChecklist({
   }, [checks, onBlockersChange]);
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
-      <h3 className="text-sm font-semibold text-slate-800">Readiness Checklist</h3>
-      <ul className="space-y-2">
-        {checks.map((check) => (
-          <li key={check.id} className={`text-sm flex gap-2 ${statusStyles(check.status)}`}>
-            <span className="font-medium shrink-0">{statusIcon(check.status)}</span>
-            <div>
-              <span className="font-medium">{check.label}</span>
-              {check.hardBlocker && check.status === 'fail' && (
-                <span className="ml-1 text-xs text-red-500">(required)</span>
-              )}
-              {!check.hardBlocker && check.status === 'warning' && (
-                <span className="ml-1 text-xs text-amber-600">(recommended)</span>
-              )}
-              {check.message && <p className="text-xs mt-0.5 opacity-90">{check.message}</p>}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Card className="bg-muted/30">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm">Readiness Checklist</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2">
+          {checks.map((check) => (
+            <li
+              key={check.id}
+              className={cn('flex gap-2 text-sm', statusStyles(check.status))}
+            >
+              <StatusIcon status={check.status} />
+              <div>
+                <span className="font-medium">{check.label}</span>
+                {check.hardBlocker && check.status === 'fail' && (
+                  <span className="ml-1 text-xs text-destructive">(required)</span>
+                )}
+                {!check.hardBlocker && check.status === 'warning' && (
+                  <span className="ml-1 text-xs text-status-pending-foreground">
+                    (recommended)
+                  </span>
+                )}
+                {check.message && (
+                  <p className="mt-0.5 text-xs opacity-90">{check.message}</p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }
 

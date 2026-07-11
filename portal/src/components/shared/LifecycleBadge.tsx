@@ -1,16 +1,12 @@
-import { LIFECYCLE_COLORS, LIFECYCLE_LABELS } from '@/config/lifecycle';
+import { LIFECYCLE_LABELS } from '@/config/lifecycle';
+import { Badge } from '@/components/ui/badge';
+import { lifecycleBadgeVariant } from '@/lib/catalog-badges';
 import type { LifecycleStatus } from '@/types';
-import { cn } from '@/lib/utils';
 
 export function LifecycleBadge({ status }: { status: LifecycleStatus }) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-        LIFECYCLE_COLORS[status],
-      )}
-    >
+    <Badge variant={lifecycleBadgeVariant(status)} withDot>
       {LIFECYCLE_LABELS[status]}
-    </span>
+    </Badge>
   );
 }

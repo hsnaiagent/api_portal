@@ -106,8 +106,23 @@ async function parseEnvelope(response: Response): Promise<StateEnvelope> {
   return normalizeEnvelope((await response.json()) as StateEnvelope);
 }
 
+async function fetchStateWithRetry(attempts = 8, delayMs = 400): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      return await fetch('/api/state', { cache: 'no-store' });
+    } catch (err) {
+      lastError = err;
+      if (attempt < attempts - 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw lastError ?? new Error('State API unreachable');
+}
+
 export async function fetchPersistedState(): Promise<StateEnvelope> {
-  const response = await fetch('/api/state', { cache: 'no-store' });
+  const response = await fetchStateWithRetry();
   return parseEnvelope(response);
 }
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import type { API, PrecomputedSdkLanguage, SDKLanguage } from '@/types';
 import {
   generateSdkForLanguage,
@@ -6,6 +7,9 @@ import {
 } from '@/lib/sdk-api';
 import { AIThinkingOverlay } from '@/components/ai/AIThinkingOverlay';
 import { AIBadge } from '@/components/ai/AIBadge';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CodeBlock } from './CodeBlock';
 
 const languages: { id: SDKLanguage; label: string; prism: string; precomputed: boolean }[] = [
@@ -81,43 +85,44 @@ export function SDKPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold">SDK & Code</h3>
-          {source === 'precomputed' && (
-            <span className="rounded-full bg-brand-green/10 text-brand-green px-2 py-0.5 text-xs font-medium">
-              Pre-computed
-            </span>
-          )}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-semibold text-foreground">SDK & Code</h3>
+          {source === 'precomputed' && <Badge variant="active">Pre-computed</Badge>}
           {source === 'ondemand' && (
-            <span className="rounded-full bg-brand-blue-light text-brand-blue-dark px-2 py-0.5 text-xs font-medium flex items-center gap-1">
+            <Badge variant="info" className="gap-1">
               <AIBadge label="AI-5" /> Generated on demand
-            </span>
+            </Badge>
           )}
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {languages.map((l) => (
-            <button
-              key={l.id}
-              type="button"
-              onClick={() => setLang(l.id)}
-              className={`rounded-lg px-3 py-1 text-xs font-medium ${lang === l.id ? 'bg-brand-green text-brand-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-            >
-              {l.label}
-            </button>
-          ))}
         </div>
       </div>
+
+      <Tabs value={lang} onValueChange={(v) => v && setLang(v as SDKLanguage)}>
+        <TabsList className="h-auto flex-wrap gap-1 border-none bg-transparent p-0">
+          {languages.map((l) => (
+            <TabsTrigger
+              key={l.id}
+              value={l.id}
+              className="rounded-lg px-3 py-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              {l.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       {langMeta && !langMeta.precomputed && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           {langMeta.label} is generated on demand from the stored OpenAPI schema.
         </p>
       )}
       <AIThinkingOverlay loading={loading} />
       {!loading && displayCode && <CodeBlock code={displayCode} language={prismLang} />}
       {!loading && displayCode && (
-        <button
+        <Button
           type="button"
+          variant="link"
+          size="sm"
           onClick={() => {
             const blob = new Blob([displayCode], { type: 'text/plain' });
             const a = document.createElement('a');
@@ -125,10 +130,9 @@ export function SDKPanel({
             a.download = `${api.slug}-${lang}.txt`;
             a.click();
           }}
-          className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline"
         >
           Download snippet
-        </button>
+        </Button>
       )}
     </div>
   );

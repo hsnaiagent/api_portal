@@ -1,6 +1,20 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
 import { usePortal } from '@/store/AppStore';
 import { useNotify } from '@/hooks/useNotify';
+import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import type { Domain } from '@/types';
 
 const emptyDraft = { name: '', code: '', description: '' };
@@ -11,6 +25,7 @@ export function DomainsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState(emptyDraft);
+  const [deleteTarget, setDeleteTarget] = useState<Domain | null>(null);
 
   const apiCountByDomain = (domainId: string) =>
     state.apis.filter((a) => a.domain_id === domainId).length;
@@ -75,149 +90,163 @@ export function DomainsPage() {
     setEditingId(null);
   };
 
-  const remove = (d: Domain) => {
-    const count = apiCountByDomain(d.domain_id);
-    if (count > 0) {
-      notify(
-        'Cannot delete domain',
-        `${d.name} still has ${count} API${count === 1 ? '' : 's'} assigned.`,
-        'warning',
-      );
-      return;
-    }
-    if (!window.confirm(`Delete domain "${d.name}"?`)) return;
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const d = deleteTarget;
     dispatch({ type: 'DELETE_DOMAIN', payload: d.domain_id });
     audit('domain.deleted', d.domain_id);
     notify('Domain deleted', `${d.name} removed from the registry.`, 'info');
+    setDeleteTarget(null);
   };
+
+  const columns = useMemo<DataTableColumn<Domain>[]>(
+    () => [
+      {
+        id: 'name',
+        header: 'Name',
+        cell: (d) => <span className="font-medium">{d.name}</span>,
+      },
+      {
+        id: 'code',
+        header: 'Code',
+        cell: (d) => <span className="font-mono text-xs">{d.code}</span>,
+      },
+      {
+        id: 'description',
+        header: 'Description',
+        cell: (d) => <span className="text-muted-foreground">{d.description}</span>,
+      },
+      {
+        id: 'apis',
+        header: 'APIs',
+        cell: (d) => apiCountByDomain(d.domain_id),
+      },
+      {
+        id: 'actions',
+        header: '',
+        headerClassName: 'w-28',
+        cellClassName: 'text-right whitespace-nowrap',
+        cell: (d) => (
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="link" size="sm" onClick={() => openEdit(d)}>
+              Edit
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => {
+                const count = apiCountByDomain(d.domain_id);
+                if (count > 0) {
+                  notify(
+                    'Cannot delete domain',
+                    `${d.name} still has ${count} API${count === 1 ? '' : 's'} assigned.`,
+                    'warning',
+                  );
+                  return;
+                }
+                setDeleteTarget(d);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [state.apis, notify],
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Domain Registry</h1>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm font-medium hover:bg-brand-green-dark"
-        >
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Domain Registry</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Business domains group APIs for discovery, ownership, and visibility rules.
+          </p>
+        </div>
+        <Button type="button" onClick={openCreate}>
           Add Domain
-        </button>
-      </div>
-      <p className="text-sm text-slate-500">
-        Business domains group APIs for discovery, ownership, and visibility rules.
-      </p>
-
-      <div className="overflow-x-auto rounded-xl border bg-brand-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-4 py-3 text-left">Name</th>
-              <th className="px-4 py-3 text-left">Code</th>
-              <th className="px-4 py-3 text-left">Description</th>
-              <th className="px-4 py-3 text-left">APIs</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {state.domains.map((d) => (
-              <tr key={d.domain_id} className="border-t">
-                <td className="px-4 py-3 font-medium">{d.name}</td>
-                <td className="px-4 py-3 font-mono text-xs">{d.code}</td>
-                <td className="px-4 py-3 text-slate-600">{d.description}</td>
-                <td className="px-4 py-3">{apiCountByDomain(d.domain_id)}</td>
-                <td className="px-4 py-3 text-right whitespace-nowrap">
-                  <button
-                    type="button"
-                    onClick={() => openEdit(d)}
-                    className="text-brand-blue hover:text-brand-blue-dark hover:underline mr-3"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => remove(d)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {state.domains.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  No domains registered yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        </Button>
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-md rounded-xl bg-brand-white p-6 space-y-4"
-          >
-            <h2 className="font-bold">{editingId ? 'Edit Domain' : 'Add Domain'}</h2>
+      <DataTable
+        columns={columns}
+        data={state.domains}
+        keyExtractor={(d) => d.domain_id}
+        emptyTitle="No domains registered yet"
+        emptyDescription="Add a domain to organize APIs by business area."
+        emptyAction={
+          <Button size="sm" onClick={openCreate}>
+            Add Domain
+          </Button>
+        }
+      />
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingId ? 'Edit Domain' : 'Add Domain'}</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="space-y-4">
             <div>
-              <label htmlFor="dom-name" className="block text-sm font-medium mb-1">
-                Name <span className="text-red-500">*</span>
+              <label htmlFor="dom-name" className="mb-1 block text-sm font-medium text-foreground">
+                Name <span className="text-destructive">*</span>
               </label>
-              <input
+              <Input
                 id="dom-name"
                 value={draft.name}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="dom-code" className="block text-sm font-medium mb-1">
-                Code <span className="text-red-500">*</span>
+              <label htmlFor="dom-code" className="mb-1 block text-sm font-medium text-foreground">
+                Code <span className="text-destructive">*</span>
               </label>
-              <input
+              <Input
                 id="dom-code"
                 value={draft.code}
                 onChange={(e) => setDraft({ ...draft, code: e.target.value })}
                 placeholder="e.g. logistics"
                 disabled={Boolean(editingId)}
-                className="w-full rounded-lg border px-3 py-2 text-sm disabled:bg-slate-50"
               />
             </div>
             <div>
-              <label htmlFor="dom-desc" className="block text-sm font-medium mb-1">
+              <label htmlFor="dom-desc" className="mb-1 block text-sm font-medium text-foreground">
                 Description
               </label>
-              <textarea
+              <Textarea
                 id="dom-desc"
                 value={draft.description}
                 onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                 rows={3}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
               />
             </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={save}
-                disabled={!draft.name.trim() || !draft.code.trim()}
-                className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-              >
-                {editingId ? 'Save' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setShowForm(false)}>
+              Cancel
+            </Button>
+            <Button onClick={save} disabled={!draft.name.trim() || !draft.code.trim()}>
+              {editingId ? 'Save' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={`Delete domain "${deleteTarget?.name ?? ''}"?`}
+        description="This removes the domain from the registry. Domains with assigned APIs cannot be deleted."
+        confirmLabel="Delete domain"
+        confirmVariant="destructive"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

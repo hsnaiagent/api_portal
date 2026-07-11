@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
+
 import type { PrecomputedSdkLanguage } from '@/types';
 import { precomputeSdkArtifacts, type PrecomputedSdkResult } from '@/lib/sdk-api';
 import { AIThinkingOverlay } from '@/components/ai/AIThinkingOverlay';
 import { AIBadge } from '@/components/ai/AIBadge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CodeBlock } from './CodeBlock';
 
 const PRECOMPUTED_TABS: { id: PrecomputedSdkLanguage; label: string; prism: string }[] = [
@@ -55,65 +59,67 @@ export function SdkReviewStep({
   const prismLang = PRECOMPUTED_TABS.find((t) => t.id === tab)?.prism ?? 'text';
 
   return (
-    <div className="space-y-4 rounded-xl border bg-brand-white p-6">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h3 className="font-semibold flex items-center gap-2">
-          SDK Review <AIBadge label="AI-16" />
-        </h3>
-        {artifacts?.source && (
-          <span className="text-xs text-slate-500">
-            Generated via {artifacts.source === 'gemini' ? artifacts.model : 'fallback template'}
-          </span>
-        )}
-      </div>
-      <p className="text-sm text-slate-600">
-        Review the pre-generated cURL, Python, and Node.js snippets derived strictly from your
-        OpenAPI schema. Approve before submitting your API proposal.
-      </p>
+    <Card>
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            SDK Review <AIBadge label="AI-16" />
+          </CardTitle>
+          {artifacts?.source && (
+            <span className="text-xs text-muted-foreground">
+              Generated via {artifacts.source === 'gemini' ? artifacts.model : 'fallback template'}
+            </span>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Review the pre-generated cURL, Python, and Node.js snippets derived strictly from your
+          OpenAPI schema. Approve before submitting your API proposal.
+        </p>
 
-      <div className="flex flex-wrap gap-1">
-        {PRECOMPUTED_TABS.map((t) => (
-          <button
-            key={t.id}
+        <Tabs
+          value={tab}
+          onValueChange={(v) => v && setTab(v as PrecomputedSdkLanguage)}
+        >
+          <TabsList className="h-auto flex-wrap gap-1 border-none bg-transparent p-0">
+            {PRECOMPUTED_TABS.map((t) => (
+              <TabsTrigger
+                key={t.id}
+                value={t.id}
+                className="rounded-lg px-3 py-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+
+        <AIThinkingOverlay loading={loading} />
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {!loading && code && <CodeBlock code={code} language={prismLang} />}
+
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="secondary" onClick={onBack} disabled={loading}>
+            Back
+          </Button>
+          <Button
             type="button"
-            onClick={() => setTab(t.id)}
-            className={`rounded-lg px-3 py-1 text-xs font-medium ${tab === t.id ? 'bg-brand-green text-brand-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            variant="secondary"
+            onClick={() => void runPrecompute()}
+            disabled={loading}
           >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <AIThinkingOverlay loading={loading} />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {!loading && code && <CodeBlock code={code} language={prismLang} />}
-
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          disabled={loading}
-          className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={() => void runPrecompute()}
-          disabled={loading}
-          className="rounded-lg border border-brand-blue px-4 py-2 text-sm text-brand-blue disabled:opacity-50"
-        >
-          Regenerate
-        </button>
-        <button
-          type="button"
-          onClick={handleApprove}
-          disabled={loading || !artifacts || approved}
-          className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-        >
-          {approved ? 'Approved' : 'Approve & Continue'}
-        </button>
-      </div>
-    </div>
+            Regenerate
+          </Button>
+          <Button
+            type="button"
+            onClick={handleApprove}
+            disabled={loading || !artifacts || approved}
+          >
+            {approved ? 'Approved' : 'Approve & Continue'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

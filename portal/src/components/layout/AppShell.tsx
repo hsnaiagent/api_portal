@@ -1,26 +1,34 @@
-import { Outlet, Navigate } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
-import { Header } from './Header';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+
+import { PortalShell } from '@/components/portal/portal-shell';
 import { ToastContainer } from '@/components/shared/ToastContainer';
 import { AIAssistant } from '@/components/ai/AIAssistant';
 import { usePortal } from '@/store/AppStore';
 import { ROUTES } from '@/config/routes';
+import { buildBreadcrumbs } from '@/lib/breadcrumbs';
+import { buildPortalNavSections } from '@/lib/build-nav-sections';
 
 export function AppShell() {
   const { state } = usePortal();
+  const location = useLocation();
+
   if (!state.currentUser) return <Navigate to={ROUTES.login} replace />;
 
+  const role = state.activeRole;
+  const sections =
+    role && state.currentUser
+      ? buildPortalNavSections(role, state.currentUser.provider_domains)
+      : [];
+
+  const breadcrumbs = buildBreadcrumbs(location.pathname, role);
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-50">
-          <Outlet />
-        </main>
-      </div>
+    <>
+      <PortalShell breadcrumbs={breadcrumbs} sections={sections}>
+        <Outlet />
+      </PortalShell>
       <ToastContainer />
       <AIAssistant />
-    </div>
+    </>
   );
 }

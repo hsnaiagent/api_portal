@@ -2,8 +2,6 @@ import { useState } from 'react';
 
 import { useParams, Link } from 'react-router-dom';
 
-import * as Tabs from '@radix-ui/react-tabs';
-
 import { usePortal } from '@/store/AppStore';
 
 import { getUserById } from '@/data/users';
@@ -32,6 +30,26 @@ import { triggerWorkflow } from '@/mocks/WorkflowAdapter';
 
 import { provisionSubscription } from '@/mocks/GatewayAdapter';
 
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useNotify } from '@/hooks/useNotify';
 
 import { ROUTES } from '@/config/routes';
@@ -286,33 +304,33 @@ export function ApiDetailPage() {
     <div className="space-y-6">
       <Link
         to={ROUTES.consumer.catalog}
-        className="text-sm text-brand-blue hover:text-brand-blue-dark hover:underline"
+        className={buttonVariants({ variant: 'link', size: 'sm' })}
       >
         ← Back to catalog
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{api.name}</h1>
+          <h1 className="text-2xl font-bold text-foreground">{api.name}</h1>
 
-          <p className="text-slate-500">
+          <p className="text-sm text-muted-foreground">
             {domain?.name} · v{api.version} · Tier {api.gateway_tier}
           </p>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2">
           <ClassificationBadge classification={api.classification} showHandling />
 
           <LifecycleBadge status={api.lifecycle_status} />
         </div>
       </div>
 
-      <p className="text-slate-600">{api.description}</p>
+      <p className="text-muted-foreground">{api.description}</p>
 
-      <p className="text-sm text-slate-500">Owner: {owner?.display_name}</p>
+      <p className="text-sm text-muted-foreground">Owner: {owner?.display_name}</p>
 
       {isLlm && (
-        <div className="rounded-lg border border-brand-blue/30 bg-brand-blue-light/40 px-4 py-3 text-sm text-brand-blue-dark">
+        <div className="rounded-lg border border-link/30 bg-link-subtle/40 px-4 py-3 text-sm text-link-hover">
           LLM API access requires an ROI justification form reviewed by the LLM & AI Admin.
         </div>
       )}
@@ -321,268 +339,228 @@ export function ApiDetailPage() {
         (api.llm_config.model ||
           api.llm_config.rate_limit_per_min ||
           api.llm_config.monthly_token_budget) && (
-          <div className="flex flex-wrap gap-2 text-xs">
+          <div className="flex flex-wrap gap-2">
             {api.llm_config.model && (
-              <span className="rounded-full bg-slate-100 px-3 py-1">
-                Model: {api.llm_config.model}
-              </span>
+              <Badge variant="neutral">Model: {api.llm_config.model}</Badge>
             )}
 
             {api.llm_config.rate_limit_per_min != null && (
-              <span className="rounded-full bg-slate-100 px-3 py-1">
-                {api.llm_config.rate_limit_per_min} req/min
-              </span>
+              <Badge variant="neutral">{api.llm_config.rate_limit_per_min} req/min</Badge>
             )}
 
             {api.llm_config.monthly_token_budget != null && (
-              <span className="rounded-full bg-slate-100 px-3 py-1">
+              <Badge variant="neutral">
                 {api.llm_config.monthly_token_budget.toLocaleString()} tokens/mo
-              </span>
+              </Badge>
             )}
           </div>
         )}
 
       {!hasActiveSub && !hasPendingLlm && api.lifecycle_status === 'published' && (
-        <button
-          type="button"
-          onClick={openRequestModal}
-          className="rounded-lg bg-brand-green px-4 py-2 text-brand-white font-medium hover:bg-brand-green-dark"
-        >
-          Request Access
-        </button>
+        <Button onClick={openRequestModal}>Request Access</Button>
       )}
 
       {hasActiveSub && (
-        <span className="inline-block rounded-full bg-brand-green-light text-brand-green px-3 py-1 text-sm font-medium">
-          Active subscription
-        </span>
+        <Badge variant="active">Active subscription</Badge>
       )}
 
       {hasPendingLlm && (
-        <span className="inline-block rounded-full bg-yellow-100 text-yellow-800 px-3 py-1 text-sm font-medium">
-          LLM access pending review
-        </span>
+        <Badge variant="pending">LLM access pending review</Badge>
       )}
 
-      <Tabs.Root defaultValue="overview">
-        <Tabs.List className="flex gap-1 border-b border-slate-200">
+      <Tabs defaultValue="overview">
+        <TabsList>
           {['overview', 'docs', 'sandbox', 'sdk'].map((tab) => (
-            <Tabs.Trigger
-              key={tab}
-              value={tab}
-              className="px-4 py-2 text-sm font-medium capitalize data-[state=active]:border-b-2 data-[state=active]:border-brand-green data-[state=active]:text-brand-green"
-            >
+            <TabsTrigger key={tab} value={tab} className="capitalize">
               {tab === 'sdk' ? 'SDK & Code' : tab}
-            </Tabs.Trigger>
+            </TabsTrigger>
           ))}
-        </Tabs.List>
+        </TabsList>
 
-        <Tabs.Content value="overview" className="pt-6">
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <h3 className="font-semibold">Tags</h3>
+        <TabsContent value="overview">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              <h3 className="font-semibold text-foreground">Tags</h3>
 
               <div className="flex flex-wrap gap-2">
                 {api.tags.map((t) => (
-                  <span key={t} className="rounded-full bg-slate-100 px-3 py-1 text-xs">
+                  <Badge key={t} variant="neutral">
                     {t}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-brand-white p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm">You might also need</h3>
-
-                <button
+            <Card>
+              <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-sm">You might also need</CardTitle>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={loadRecommendations}
-                  className="text-xs text-brand-blue"
+                  className="h-auto px-2 py-1"
                 >
                   <AIBadge label="AI-4" />
-                </button>
-              </div>
-
-              {recommendations.map((r) => (
-                <Link
-                  key={r.id}
-                  to={ROUTES.consumer.apiDetail(r.id)}
-                  className="block text-sm text-brand-blue hover:text-brand-blue-dark hover:underline py-1"
-                >
-                  {r.label}
-                </Link>
-              ))}
-            </div>
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {recommendations.map((r) => (
+                  <Link
+                    key={r.id}
+                    to={ROUTES.consumer.apiDetail(r.id)}
+                    className={buttonVariants({ variant: 'link', size: 'sm' })}
+                  >
+                    {r.label}
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
           </div>
-        </Tabs.Content>
+        </TabsContent>
 
-        <Tabs.Content value="docs" className="pt-6 space-y-4">
-          <p className="text-xs text-slate-500">
+        <TabsContent value="docs" className="space-y-4">
+          <p className="text-xs text-muted-foreground">
             Version {api.version} · {api.endpoints.length} endpoint
             {api.endpoints.length === 1 ? '' : 's'}
           </p>
 
           {api.endpoints.map((ep, i) => (
-            <div
-              key={i}
-              className="rounded-xl border border-slate-200 bg-brand-white p-4 space-y-2"
-            >
-              <p className="font-mono text-sm">
-                <span className="font-bold text-brand-green">{ep.method}</span> {ep.path}
-              </p>
-
-              <p className="text-sm text-slate-600">{ep.summary}</p>
-
-              {ep.parameters && ep.parameters.length > 0 && (
-                <div className="text-xs text-slate-600">
-                  <p className="font-medium text-slate-500 mb-1">Parameters</p>
-
-                  <ul className="space-y-0.5">
-                    {ep.parameters.map((p) => (
-                      <li key={`${p.in}-${p.name}`} className="font-mono">
-                        {p.name}{' '}
-                        <span className="text-slate-400">
-                          ({p.in}, {p.type}
-                          {p.required ? ', required' : ''})
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {ep.responseExample && (
-                <pre className="overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-700">
-                  {JSON.stringify(ep.responseExample, null, 2)}
-                </pre>
-              )}
-            </div>
-          ))}
-        </Tabs.Content>
-
-        <Tabs.Content value="sandbox" className="pt-6">
-          <SandboxPanel api={api} application={app} hasActiveSubscription={hasActiveSub} />
-        </Tabs.Content>
-
-        <Tabs.Content value="sdk" className="pt-6">
-          <SDKPanel api={api} application={app} credentialClientId={cred?.client_id} />
-        </Tabs.Content>
-      </Tabs.Root>
-
-      {showSubModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-2xl max-h-[min(90vh,48rem)] flex flex-col rounded-xl bg-brand-white shadow-xl"
-          >
-            <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-slate-100 space-y-4">
-              <h2 className="text-lg font-bold">
-                {isLlm ? 'Request LLM API Access' : 'Request Subscription'}
-              </h2>
-
-              {myApps.length > 0 && (
-                <div>
-                  <label htmlFor="sub-app" className="block text-sm font-medium mb-1">
-                    Application
-                  </label>
-
-                  <select
-                    id="sub-app"
-                    value={appId}
-                    onChange={(e) => setAppId(e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                  >
-                    {myApps.map((a) => (
-                      <option key={a.application_id} value={a.application_id}>
-                        {a.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {myApps.length === 0 ? (
-              <div className="flex-1 overflow-y-auto px-6 py-8 min-h-0 text-center space-y-3">
-                <p className="font-medium text-slate-700">You need an application first</p>
-
-                <p className="text-sm text-slate-500 max-w-sm mx-auto">
-                  Subscriptions are tied to a consumer application. Create one, then come back to
-                  request access.
+            <Card key={i}>
+              <CardContent className="space-y-2 p-4">
+                <p className="font-mono text-sm">
+                  <span className="font-bold text-brand">{ep.method}</span> {ep.path}
                 </p>
 
-                <Link
-                  to={ROUTES.consumer.applications}
+                <p className="text-sm text-muted-foreground">{ep.summary}</p>
 
-                  className="inline-block rounded-lg bg-brand-green px-4 py-2 text-sm font-medium text-brand-white hover:bg-brand-green-dark"
-                >
-                  Create an application
-                </Link>
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
-                {isLlm ? (
-                  <LLMSubscriptionForm value={llmForm} onChange={setLlmForm} />
-                ) : (
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label htmlFor="sub-purpose" className="text-sm font-medium">
-                        Purpose (required)
-                      </label>
+                {ep.parameters && ep.parameters.length > 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    <p className="mb-1 font-medium text-foreground">Parameters</p>
 
-                      <button
-                        type="button"
-                        onClick={draftPurpose}
-                        disabled={aiPurposeLoading}
-                        className="text-xs text-brand-blue disabled:opacity-50"
-                      >
-                        {aiPurposeLoading ? 'Drafting…' : 'AI-3 Help me write this'}
-                      </button>
-                    </div>
-
-                    <textarea
-                      id="sub-purpose"
-                      value={purpose}
-                      onChange={(e) => setPurpose(e.target.value)}
-                      rows={4}
-                      className="w-full rounded-lg border px-3 py-2 text-sm"
-                    />
+                    <ul className="space-y-0.5">
+                      {ep.parameters.map((p) => (
+                        <li key={`${p.in}-${p.name}`} className="font-mono">
+                          {p.name}{' '}
+                          <span className="text-muted-foreground">
+                            ({p.in}, {p.type}
+                            {p.required ? ', required' : ''})
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
-              </div>
-            )}
 
-            <div className="flex-shrink-0 px-6 py-4 border-t border-slate-100 flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => setShowSubModal(false)}
-                className="px-4 py-2 text-sm"
-              >
-                {myApps.length === 0 ? 'Close' : 'Cancel'}
-              </button>
+                {ep.responseExample && (
+                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-foreground">
+                    {JSON.stringify(ep.responseExample, null, 2)}
+                  </pre>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
 
-              {myApps.length > 0 && (
-                <button
-                  type="button"
+        <TabsContent value="sandbox">
+          <SandboxPanel api={api} application={app} hasActiveSubscription={hasActiveSub} />
+        </TabsContent>
 
-                  onClick={isLlm ? requestLlmAccess : requestStandardAccess}
+        <TabsContent value="sdk">
+          <SDKPanel api={api} application={app} credentialClientId={cred?.client_id} />
+        </TabsContent>
+      </Tabs>
 
-                  disabled={
-                    submitting ||
-                    (isLlm ? !isLlmFormComplete(llmForm) || !appId : !purpose || !appId)
-                  }
+      <Dialog open={showSubModal} onOpenChange={setShowSubModal}>
+        <DialogContent className="flex max-h-[min(90vh,48rem)] max-w-2xl flex-col gap-0 p-0">
+          <DialogHeader>
+            <DialogTitle>
+              {isLlm ? 'Request LLM API Access' : 'Request Subscription'}
+            </DialogTitle>
+          </DialogHeader>
 
-                  className="rounded-lg bg-brand-green px-4 py-2 text-brand-white text-sm disabled:opacity-50"
-                >
-                  {submitting ? 'Submitting…' : 'Submit'}
-                </button>
-              )}
+          {myApps.length > 0 && (
+            <div className="border-b border-border px-6 pb-4">
+              <label htmlFor="sub-app" className="mb-1 block text-sm font-medium">
+                Application
+              </label>
+              <Select value={appId} onValueChange={(v) => v && setAppId(v)}>
+                <SelectTrigger id="sub-app" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {myApps.map((a) => (
+                    <SelectItem key={a.application_id} value={a.application_id}>
+                      {a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        </div>
-      )}
+          )}
+
+          {myApps.length === 0 ? (
+            <DialogBody className="space-y-3 text-center">
+              <p className="font-medium text-foreground">You need an application first</p>
+              <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+                Subscriptions are tied to a consumer application. Create one, then come back to
+                request access.
+              </p>
+              <Link to={ROUTES.consumer.applications}>
+                <Button>Create an application</Button>
+              </Link>
+            </DialogBody>
+          ) : (
+            <DialogBody className="max-h-[min(60vh,32rem)] overflow-y-auto">
+              {isLlm ? (
+                <LLMSubscriptionForm value={llmForm} onChange={setLlmForm} />
+              ) : (
+                <div>
+                  <div className="mb-1 flex justify-between">
+                    <label htmlFor="sub-purpose" className="text-sm font-medium">
+                      Purpose (required)
+                    </label>
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={draftPurpose}
+                      disabled={aiPurposeLoading}
+                      className="h-auto px-0"
+                    >
+                      {aiPurposeLoading ? 'Drafting…' : 'AI-3 Help me write this'}
+                    </Button>
+                  </div>
+                  <Textarea
+                    id="sub-purpose"
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+              )}
+            </DialogBody>
+          )}
+
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setShowSubModal(false)}>
+              {myApps.length === 0 ? 'Close' : 'Cancel'}
+            </Button>
+            {myApps.length > 0 && (
+              <Button
+                onClick={isLlm ? requestLlmAccess : requestStandardAccess}
+                disabled={
+                  submitting ||
+                  (isLlm ? !isLlmFormComplete(llmForm) || !appId : !purpose || !appId)
+                }
+                loading={submitting}
+              >
+                {submitting ? 'Submitting…' : 'Submit'}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

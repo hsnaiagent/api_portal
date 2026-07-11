@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   /* ── Brand Colors.csv palette ── */
@@ -26,14 +29,225 @@
   --color-slate-800: #323232;
 }
 
-body {
-  margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    Segoe UI,
-    Roboto,
-    sans-serif;
-  background: var(--color-slate-50);
-  color: var(--color-brand-dark-gray);
+@theme inline {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand-specific tokens */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+  --color-link-subtle: var(--link-subtle);
+
+  /* Status tokens */
+  --color-status-active: var(--status-active);
+  --color-status-active-foreground: var(--status-active-foreground);
+  --color-status-active-bg: var(--status-active-bg);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-foreground: var(--status-pending-foreground);
+  --color-status-pending-bg: var(--status-pending-bg);
+  --color-status-deprecated: var(--status-deprecated);
+  --color-status-deprecated-foreground: var(--status-deprecated-foreground);
+  --color-status-deprecated-bg: var(--status-deprecated-bg);
+  --color-status-rejected: var(--status-rejected);
+  --color-status-rejected-foreground: var(--status-rejected-foreground);
+  --color-status-rejected-bg: var(--status-rejected-bg);
+
+  /* Sidebar tokens */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+
+  --background: #ffffff;
+  --foreground: #323232;
+
+  --card: #ffffff;
+  --card-foreground: #323232;
+
+  --popover: #ffffff;
+  --popover-foreground: #323232;
+
+  --primary: #00843d;
+  --primary-foreground: #ffffff;
+  --primary-hover: #006830;
+
+  --secondary: #f4f5f6;
+  --secondary-foreground: #323232;
+
+  --muted: #f7f8f9;
+  --muted-foreground: #5f6369;
+
+  --accent: #e6f2ec;
+  --accent-foreground: #006830;
+
+  --destructive: #c62828;
+  --destructive-foreground: #ffffff;
+
+  --border: #dadada;
+  --border-strong: #c0c0c0;
+  --input: #dadada;
+  --ring: #00843d;
+
+  /* Brand */
+  --brand: #00843d;
+  --brand-foreground: #ffffff;
+  --brand-subtle: #e6f2ec;
+  --brand-accent: #84bd00;
+
+  --link: #00a3e0;
+  --link-hover: #0033a0;
+  --link-subtle: #e6f4fb;
+
+  /* Status: active (green) */
+  --status-active: #00843d;
+  --status-active-foreground: #006830;
+  --status-active-bg: #e6f2ec;
+
+  /* Status: pending (amber) */
+  --status-pending: #b45309;
+  --status-pending-foreground: #92400e;
+  --status-pending-bg: #fef3e2;
+
+  /* Status: deprecated (neutral) */
+  --status-deprecated: #5f6369;
+  --status-deprecated-foreground: #4b4f54;
+  --status-deprecated-bg: #f1f2f3;
+
+  /* Status: rejected (red) */
+  --status-rejected: #c62828;
+  --status-rejected-foreground: #b01f1f;
+  --status-rejected-bg: #fdecec;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #323232;
+  --sidebar-muted: #5f6369;
+  --sidebar-active: #e6f2ec;
+  --sidebar-active-foreground: #006830;
+  --sidebar-border: #ececec;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #0e1512;
+  --foreground: #e8eae9;
+
+  --card: #141b18;
+  --card-foreground: #e8eae9;
+
+  --popover: #141b18;
+  --popover-foreground: #e8eae9;
+
+  --primary: #22a35a;
+  --primary-foreground: #04140b;
+  --primary-hover: #2bb767;
+
+  --secondary: #1b241f;
+  --secondary-foreground: #e8eae9;
+
+  --muted: #171e1a;
+  --muted-foreground: #9aa19c;
+
+  --accent: #14251b;
+  --accent-foreground: #6fd79b;
+
+  --destructive: #f05252;
+  --destructive-foreground: #1a0505;
+
+  --border: #263029;
+  --border-strong: #33413a;
+  --input: #263029;
+  --ring: #22a35a;
+
+  --brand: #22a35a;
+  --brand-foreground: #04140b;
+  --brand-subtle: #14251b;
+  --brand-accent: #9ede3a;
+
+  --link: #38b6ec;
+  --link-hover: #6fcbf2;
+  --link-subtle: #10222c;
+
+  --status-active: #6fd79b;
+  --status-active-foreground: #6fd79b;
+  --status-active-bg: #14251b;
+
+  --status-pending: #f0b429;
+  --status-pending-foreground: #f5cb5c;
+  --status-pending-bg: #2a2110;
+
+  --status-deprecated: #9aa19c;
+  --status-deprecated-foreground: #9aa19c;
+  --status-deprecated-bg: #1b241f;
+
+  --status-rejected: #f05252;
+  --status-rejected-foreground: #f5807f;
+  --status-rejected-bg: #2a1010;
+
+  --sidebar: #0e1512;
+  --sidebar-foreground: #e8eae9;
+  --sidebar-muted: #9aa19c;
+  --sidebar-active: #14251b;
+  --sidebar-active-foreground: #6fd79b;
+  --sidebar-border: #1e2723;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    margin: 0;
+    @apply bg-background text-foreground;
+    font-family:
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  ::selection {
+    background-color: var(--brand-subtle);
+    color: var(--accent-foreground);
+  }
 }
